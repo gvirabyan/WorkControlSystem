@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pot/screens/company_dashboard/profile/profile_items.dart';
+import 'package:pot/ui_elements/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'company_profile_page.dart';
+import 'company_employees_page.dart';
+import 'profile/company_profile_page.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({super.key});
@@ -28,9 +31,9 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     setState(() {
       _companyId = id;
       _pages = [
-        const Center(child: Text('Employees Page')),
+        if (_companyId != null) CompanyEmployeesPage(companyId: _companyId!),
         const Center(child: Text('Documents Page')),
-        if (_companyId != null) CompanyProfilePage(companyId: _companyId!),
+        if (_companyId != null) ProfileItems(companyId: _companyId!),
       ];
     });
   }
@@ -50,6 +53,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     }
 
     return Scaffold(
+      appBar: CustomAppBar(title: "Company Dashboard"),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
+import '../ui_elements//app_input_field.dart'; // импортим твой общий инпут
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -113,63 +114,47 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 16),
 
                 // Name
-                _buildTextFormField(
+                AppInputField(
                   controller: _nameController,
-                  hint: "Full Name",
+                  label: "Full Name",
+                  hint: "Enter your name",
                   keyboardType: TextInputType.name,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return "Name required";
-                    return null;
-                  },
                 ),
-
                 const SizedBox(height: 16),
 
                 // Email OR Phone
-                _buildTextFormField(
+                AppInputField(
                   controller: _emailOrPhoneController,
-                  hint: "Email or Phone number",
+                  label: "Email or Phone",
+                  hint: "Enter your email or phone number",
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return "Email or Phone required";
-                    final isEmail = RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value);
-                    final isPhone = RegExp(r'^\+?[0-9]{7,15}$').hasMatch(value);
-                    if (!isEmail && !isPhone) return "Enter valid email or phone number";
-                    return null;
-                  },
                 ),
-
                 const SizedBox(height: 16),
 
                 // Password
-                _buildTextFormField(
+                AppInputField(
                   controller: _passwordController,
-                  hint: "Password",
+                  label: "Password",
+                  hint: "Enter your password",
                   obscureText: _obscurePassword,
-                  keyboardType: TextInputType.text,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return "Password required";
-                    if (value.length < 6) return "Password must be at least 6 chars";
-                    return null;
-                  },
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off : Icons.visibility,
                       color: Colors.grey,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
-
                 const SizedBox(height: 16),
 
                 // Promo Code только для employee
                 if (!_isCompany) ...[
-                  _buildTextFormField(
+                  AppInputField(
                     controller: _promoCodeController,
-                    hint: "Promo Code",
+                    label: "Promo Code",
+                    hint: "Enter your promo code",
                     keyboardType: TextInputType.text,
-                    validator: (value) => null,
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -217,32 +202,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String hint,
-    required String? Function(String?) validator,
-    bool obscureText = false,
-    required TextInputType keyboardType,
-    Widget? suffixIcon,
-  }) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      validator: validator,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.blue.shade50,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        suffixIcon: suffixIcon,
       ),
     );
   }

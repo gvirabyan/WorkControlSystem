@@ -22,15 +22,13 @@ class CompanyProfileService {
     required String email,
     required String phone,
     required String address,
-    required String plan,
   }) async {
     try {
       await _firestore.collection('users').doc(companyId).set({
-        'fullName': fullName,
-        'email': email,
+        'name': fullName,
+        'emailOrPhone': email,
         'phone': phone,
         'address': address,
-        'plan': plan,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
