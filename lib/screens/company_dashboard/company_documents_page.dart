@@ -14,7 +14,6 @@ class CompanyDocumentsPage extends StatefulWidget {
 
 class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
   final FirestoreService _firestoreService = FirestoreService();
-  List<Document> _documents = [];
   List<Document> _filteredDocuments = [];
   DateTime? _startDate;
   DateTime? _endDate;
@@ -42,8 +41,8 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
     });
   }
 
-  void _addDocument(Document document) {
-    _firestoreService.sendDocument(document);
+  Future<void> _addDocument(Document document) async {
+    await _firestoreService.sendDocument(document);
   }
 
   void _applyFilter(
@@ -52,23 +51,6 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
       _startDate = startDate;
       _endDate = endDate;
       _documentTypes = documentTypes;
-      _filteredDocuments = _documents.where((doc) {
-        final docDate = doc.date;
-        if (_startDate != null && docDate.isBefore(_startDate!)) {
-          return false;
-        }
-        if (_endDate != null && docDate.isAfter(_endDate!)) {
-          return false;
-        }
-        final selectedTypes = _documentTypes.entries
-            .where((entry) => entry.value)
-            .map((entry) => entry.key)
-            .toList();
-        if (selectedTypes.isNotEmpty && !selectedTypes.contains(doc.type)) {
-          return false;
-        }
-        return true;
-      }).toList();
     });
   }
 
@@ -90,16 +72,19 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.add),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SendDocumentPage(
-                              onSend: _addDocument,
-                            ),
-                          ),
-                        );
-                      },
+                      onPressed: _companyId == null
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SendDocumentPage(
+                                    onSend: _addDocument,
+                                    companyId: _companyId!,
+                                  ),
+                                ),
+                              );
+                            },
                     ),
                     IconButton(
                       icon: const Icon(Icons.filter_list),
@@ -135,12 +120,29 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(child: Text('No documents found.'));
                       }
-                      _documents = snapshot.data!;
-                      _applyFilter(_startDate, _endDate, _documentTypes);
+                      final documents = snapshot.data!;
+                      final filteredDocs = documents.where((doc) {
+                        final docDate = doc.date;
+                        if (_startDate != null && docDate.isBefore(_startDate!)) {
+                          return false;
+                        }
+                        if (_endDate != null && docDate.isAfter(_endDate!)) {
+                          return false;
+                        }
+                        final selectedTypes = _documentTypes.entries
+                            .where((entry) => entry.value)
+                            .map((entry) => entry.key)
+                            .toList();
+                        if (selectedTypes.isNotEmpty &&
+                            !selectedTypes.contains(doc.type)) {
+                          return false;
+                        }
+                        return true;
+                      }).toList();
                       return ListView.builder(
-                        itemCount: _filteredDocuments.length,
+                        itemCount: filteredDocs.length,
                         itemBuilder: (context, index) {
-                          final document = _filteredDocuments[index];
+                          final document = filteredDocs[index];
                           return ListTile(
                             title: Text(document.title),
                             subtitle: Text(document.type),

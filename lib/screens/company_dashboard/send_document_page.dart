@@ -8,7 +8,9 @@ import 'package:pot/services/firestore_service.dart';
 
 class SendDocumentPage extends StatefulWidget {
   final Function(Document) onSend;
-  const SendDocumentPage({super.key, required this.onSend});
+  final String companyId;
+  const SendDocumentPage(
+      {super.key, required this.onSend, required this.companyId});
 
   @override
   State<SendDocumentPage> createState() => _SendDocumentPageState();
@@ -49,48 +51,68 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
     });
   }
 
-  void _showEmployeeSelectionDialog() {
-    showDialog(
+  void _showEmployeeSelectionDialog() async {
+    final List<UserModel>? result = await showDialog<List<UserModel>>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Employees'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: _isLoadingEmployees
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _employees.length,
-                    itemBuilder: (context, index) {
-                      final employee = _employees[index];
-                      return CheckboxListTile(
-                        title: Text(employee.name),
-                        value: _selectedEmployees.contains(employee),
-                        onChanged: (value) {
-                          setState(() {
-                            if (value!) {
-                              _selectedEmployees.add(employee);
-                            } else {
-                              _selectedEmployees.remove(employee);
-                            }
-                          });
+        final tempSelectedEmployees = List<UserModel>.from(_selectedEmployees);
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Employees'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: _isLoadingEmployees
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _employees.length,
+                        itemBuilder: (context, index) {
+                          final employee = _employees[index];
+                          final isSelected = tempSelectedEmployees
+                              .any((e) => e.id == employee.id);
+                          return CheckboxListTile(
+                            title: Text(employee.name),
+                            value: isSelected,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value!) {
+                                  tempSelectedEmployees.add(employee);
+                                } else {
+                                  tempSelectedEmployees
+                                      .removeWhere((e) => e.id == employee.id);
+                                }
+                              });
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Done'),
-            ),
-          ],
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(tempSelectedEmployees);
+                  },
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+
+    if (result != null) {
+      setState(() {
+        _selectedEmployees = result;
+      });
+    }
   }
 
   Future<void> _pickFiles() async {
@@ -189,19 +211,20 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (_formKey.currentState!.validate()) {
                     final newDocument = Document(
-                      id: DateTime.now().toString(),
+                      id: '',
                       title: _titleController.text,
                       type: _selectedDocumentType!,
                       message: _messageController.text,
                       files: _selectedFiles.map((e) => e.path).toList(),
-                      senderId: 'company1', // TODO: Get the actual sender ID
-                      recipientIds: _selectedEmployees.map((e) => e.id).toList(),
+                      senderId: widget.companyId,
+                      recipientIds:
+                          _selectedEmployees.map((e) => e.id).toList(),
                       date: DateTime.now(),
                     );
-                    widget.onSend(newDocument);
+                    await widget.onSend(newDocument);
                     Navigator.of(context).pop();
                   }
                 },
