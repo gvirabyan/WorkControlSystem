@@ -1,0 +1,199 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:pot/models/UserModel.dart';
+import 'package:pot/models/document_model.dart';
+
+class SendDocumentPage extends StatefulWidget {
+  final Function(Document) onSend;
+  const SendDocumentPage({super.key, required this.onSend});
+
+  @override
+  State<SendDocumentPage> createState() => _SendDocumentPageState();
+}
+
+class _SendDocumentPageState extends State<SendDocumentPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _messageController = TextEditingController();
+  String? _selectedDocumentType;
+  final List<String> _documentTypes = [
+    'Request',
+    'Complaint',
+    'Vacation',
+    'Meeting',
+    'Report',
+    'Other',
+  ];
+  final List<UserModel> _employees = [
+    UserModel(id: 'employee1', name: 'John Doe', avatarUrl: ''),
+    UserModel(id: 'employee2', name: 'Jane Smith', avatarUrl: ''),
+    UserModel(id: 'employee3', name: 'Peter Jones', avatarUrl: ''),
+  ];
+  List<UserModel> _selectedEmployees = [];
+  List<File> _selectedFiles = [];
+
+  void _showEmployeeSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Select Employees'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _employees.length,
+              itemBuilder: (context, index) {
+                final employee = _employees[index];
+                return CheckboxListTile(
+                  title: Text(employee.name),
+                  value: _selectedEmployees.contains(employee),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value!) {
+                        _selectedEmployees.add(employee);
+                      } else {
+                        _selectedEmployees.remove(employee);
+                      }
+                    });
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _pickFiles() async {
+    final result = await FilePicker.platform.pickFiles(allowMultiple: true);
+    if (result != null) {
+      setState(() {
+        _selectedFiles = result.paths.map((path) => File(path!)).toList();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Send Document'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              ElevatedButton(
+                onPressed: _showEmployeeSelectionDialog,
+                child: const Text('Select Employees'),
+              ),
+              Wrap(
+                children: _selectedEmployees
+                    .map((e) => Chip(label: Text(e.name)))
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a title';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedDocumentType,
+                decoration: const InputDecoration(
+                  labelText: 'Document Type',
+                  border: OutlineInputBorder(),
+                ),
+                items: _documentTypes.map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: (newValue) {
+                  setState(() {
+                    _selectedDocumentType = newValue;
+                  });
+                },
+                validator: (value) {
+                  if (value == null) {
+                    return 'Please select a document type';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _messageController,
+                decoration: const InputDecoration(
+                  labelText: 'Message',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 5,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a message';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _pickFiles,
+                child: const Text('Attach Files'),
+              ),
+              Wrap(
+                children: _selectedFiles
+                    .map((e) => Chip(label: Text(e.path.split('/').last)))
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    final newDocument = Document(
+                      id: DateTime.now().toString(),
+                      title: _titleController.text,
+                      type: _selectedDocumentType!,
+                      message: _messageController.text,
+                      files: _selectedFiles.map((e) => e.path).toList(),
+                      senderId: 'company1', // TODO: Get the actual sender ID
+                      recipientIds: _selectedEmployees.map((e) => e.id).toList(),
+                      date: DateTime.now(),
+                    );
+                    widget.onSend(newDocument);
+                    Navigator.of(context).pop();
+                  }
+                },
+                child: const Text('Send'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

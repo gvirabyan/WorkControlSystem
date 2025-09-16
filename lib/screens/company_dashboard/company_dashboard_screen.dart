@@ -3,6 +3,7 @@ import 'package:pot/screens/company_dashboard/profile/profile_items.dart';
 import 'package:pot/ui_elements/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'company_documents_page.dart';
 import 'company_employees_page.dart';
 import 'profile/company_profile_page.dart';
 
@@ -32,7 +33,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       _companyId = id;
       _pages = [
         if (_companyId != null) CompanyEmployeesPage(companyId: _companyId!),
-        const Center(child: Text('Documents Page')),
+        const CompanyDocumentsPage(),
         if (_companyId != null) ProfileItems(companyId: _companyId!),
       ];
     });
