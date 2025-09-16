@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PrivacyPolicyPage extends StatelessWidget {
   const PrivacyPolicyPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        "This is Privacy Policy Page",
-        style: TextStyle(fontSize: 18),
-      ),
+    return Scaffold(
+      body: SfPdfViewer.asset("assets/cgv.pdf"),
     );
   }
 }
