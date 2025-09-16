@@ -6,10 +6,7 @@ class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<List<UserModel>> getEmployees() async {
-    final snapshot = await _db
-        .collection('users')
-        .where('role', isEqualTo: 'employee')
-        .get();
+    final snapshot = await _db.collection('users').get();
     return snapshot.docs
         .map((doc) => UserModel.fromMap(doc.id, doc.data()))
         .toList();

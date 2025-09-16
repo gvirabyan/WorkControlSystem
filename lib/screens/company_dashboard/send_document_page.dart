@@ -8,7 +8,9 @@ import 'package:pot/services/firestore_service.dart';
 
 class SendDocumentPage extends StatefulWidget {
   final Function(Document) onSend;
-  const SendDocumentPage({super.key, required this.onSend});
+  final String companyId;
+  const SendDocumentPage(
+      {super.key, required this.onSend, required this.companyId});
 
   @override
   State<SendDocumentPage> createState() => _SendDocumentPageState();
@@ -53,41 +55,55 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Select Employees'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: _isLoadingEmployees
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _employees.length,
-                    itemBuilder: (context, index) {
-                      final employee = _employees[index];
-                      return CheckboxListTile(
-                        title: Text(employee.name),
-                        value: _selectedEmployees.contains(employee),
-                        onChanged: (value) {
-                          setState(() {
-                            if (value!) {
-                              _selectedEmployees.add(employee);
-                            } else {
-                              _selectedEmployees.remove(employee);
-                            }
-                          });
+        final tempSelectedEmployees = List<UserModel>.from(_selectedEmployees);
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Employees'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: _isLoadingEmployees
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _employees.length,
+                        itemBuilder: (context, index) {
+                          final employee = _employees[index];
+                          return CheckboxListTile(
+                            title: Text(employee.name),
+                            value: tempSelectedEmployees.contains(employee),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value!) {
+                                  tempSelectedEmployees.add(employee);
+                                } else {
+                                  tempSelectedEmployees.remove(employee);
+                                }
+                              });
+                            },
+                          );
                         },
-                      );
-                    },
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Done'),
-            ),
-          ],
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _selectedEmployees = tempSelectedEmployees;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('Done'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -197,7 +213,7 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                       type: _selectedDocumentType!,
                       message: _messageController.text,
                       files: _selectedFiles.map((e) => e.path).toList(),
-                      senderId: 'company1', // TODO: Get the actual sender ID
+                      senderId: widget.companyId,
                       recipientIds: _selectedEmployees.map((e) => e.id).toList(),
                       date: DateTime.now(),
                     );
