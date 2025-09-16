@@ -14,7 +14,6 @@ class CompanyDocumentsPage extends StatefulWidget {
 
 class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
   final FirestoreService _firestoreService = FirestoreService();
-  List<Document> _documents = [];
   List<Document> _filteredDocuments = [];
   DateTime? _startDate;
   DateTime? _endDate;
@@ -42,8 +41,8 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
     });
   }
 
-  void _addDocument(Document document) {
-    _firestoreService.sendDocument(document);
+  Future<void> _addDocument(Document document) async {
+    await _firestoreService.sendDocument(document);
   }
 
   void _applyFilter(
@@ -121,8 +120,8 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
                       if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(child: Text('No documents found.'));
                       }
-                      _documents = snapshot.data!;
-                      final filteredDocs = _documents.where((doc) {
+                      final documents = snapshot.data!;
+                      final filteredDocs = documents.where((doc) {
                         final docDate = doc.date;
                         if (_startDate != null && docDate.isBefore(_startDate!)) {
                           return false;
