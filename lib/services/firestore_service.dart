@@ -18,7 +18,7 @@ class FirestoreService {
   Stream<List<Document>> getDocuments(String senderId) {
     return _db
         .collection('documents')
-        .where('senderId', isEqualTo: senderId)
+       // .where('senderId', isEqualTo: senderId)
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => Document.fromMap(doc.id, doc.data()))
