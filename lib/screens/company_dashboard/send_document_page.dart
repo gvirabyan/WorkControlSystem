@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:pot/models/UserModel.dart';
 import 'package:pot/models/document_model.dart';
+import 'package:pot/services/firestore_service.dart';
 
 class SendDocumentPage extends StatefulWidget {
   final Function(Document) onSend;
@@ -26,13 +27,27 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
     'Report',
     'Other',
   ];
-  final List<UserModel> _employees = [
-    UserModel(id: 'employee1', name: 'John Doe', avatarUrl: ''),
-    UserModel(id: 'employee2', name: 'Jane Smith', avatarUrl: ''),
-    UserModel(id: 'employee3', name: 'Peter Jones', avatarUrl: ''),
-  ];
+  List<UserModel> _employees = [];
   List<UserModel> _selectedEmployees = [];
   List<File> _selectedFiles = [];
+  final FirestoreService _firestoreService = FirestoreService();
+  bool _isLoadingEmployees = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmployees();
+  }
+
+  void _loadEmployees() async {
+    setState(() {
+      _isLoadingEmployees = true;
+    });
+    _employees = await _firestoreService.getEmployees();
+    setState(() {
+      _isLoadingEmployees = false;
+    });
+  }
 
   void _showEmployeeSelectionDialog() {
     showDialog(
@@ -42,26 +57,28 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
           title: const Text('Select Employees'),
           content: SizedBox(
             width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _employees.length,
-              itemBuilder: (context, index) {
-                final employee = _employees[index];
-                return CheckboxListTile(
-                  title: Text(employee.name),
-                  value: _selectedEmployees.contains(employee),
-                  onChanged: (value) {
-                    setState(() {
-                      if (value!) {
-                        _selectedEmployees.add(employee);
-                      } else {
-                        _selectedEmployees.remove(employee);
-                      }
-                    });
-                  },
-                );
-              },
-            ),
+            child: _isLoadingEmployees
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _employees.length,
+                    itemBuilder: (context, index) {
+                      final employee = _employees[index];
+                      return CheckboxListTile(
+                        title: Text(employee.name),
+                        value: _selectedEmployees.contains(employee),
+                        onChanged: (value) {
+                          setState(() {
+                            if (value!) {
+                              _selectedEmployees.add(employee);
+                            } else {
+                              _selectedEmployees.remove(employee);
+                            }
+                          });
+                        },
+                      );
+                    },
+                  ),
           ),
           actions: [
             TextButton(
