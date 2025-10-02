@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:pot/screens/company_dashboard/company_dashboard_screen.dart';
+import 'package:pot/screens/employee_dashboard/employee_dashboard_screen.dart';
+import 'package:pot/services/auth_service.dart';
 import 'welcome_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,12 +17,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late AnimationController _controller;
   late Animation<double> _animation;
   final AudioPlayer _audioPlayer = AudioPlayer();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
 
-    // Анимация масштабирования
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 5),
@@ -31,17 +33,38 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _controller.forward();
-
-    // Воспроизведение звука
     _audioPlayer.play(AssetSource('sound.mp3'));
 
-    // Через 5 секунд переход на WelcomeScreen
-    Future.delayed(const Duration(seconds: 5), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-      );
-    });
+    _checkSession();
+  }
+
+  void _checkSession() async {
+    await Future.delayed(const Duration(seconds: 5));
+
+    // Проверка, авторизован ли пользователь
+    final user = await _authService.checkCurrentUser();
+
+    if (mounted) { // Проверка, что виджет все еще в дереве
+      if (user != null) {
+        final userType = user['userType'];
+        if (userType == 'company') {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const CompanyDashboard()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const EmployeeDashboard()),
+          );
+        }
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+        );
+      }
+    }
   }
 
   @override

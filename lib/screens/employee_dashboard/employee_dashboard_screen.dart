@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pot/screens/welcome_screen.dart';
+import 'package:pot/services/auth_service.dart';
 import 'documents_page.dart';
 import 'home_page.dart'; // Импорт новой страницы
 import 'history_page.dart'; // Импорт новой страницы
@@ -12,6 +14,7 @@ class EmployeeDashboard extends StatefulWidget {
 
 class _EmployeeDashboardState extends State<EmployeeDashboard> {
   int _selectedIndex = 0; // Индекс выбранной вкладки
+  final AuthService _authService = AuthService();
 
   // Список виджетов-страниц
   final List<Widget> _pages = [
@@ -26,10 +29,29 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
     });
   }
 
+  void _logout() async {
+    await _authService.logout();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+            (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      appBar: AppBar(
+        title: const Text("Employee Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _logout,
+          ),
+        ],
+      ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,

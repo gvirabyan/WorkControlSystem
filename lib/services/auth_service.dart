@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final users = FirebaseFirestore.instance.collection('users');
@@ -92,10 +93,35 @@ class AuthService {
     final data = query.docs.first.data();
     if (data['password'] != hashPassword(password)) return null;
 
+    final prefs = await SharedPreferences.getInstance();
+    final userId = query.docs.first.id;
+    await prefs.setString('userId', userId);
+    await prefs.setString('userType', data['type']);
+
+
     // Добавляем userId в возвращаемый Map
     return {
-      'userId': query.docs.first.id,
+      'userId': userId,
       ...data,
     };
+  }
+
+  /// Проверка текущего пользователя
+  Future<Map<String, String>?> checkCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('userId');
+    final userType = prefs.getString('userType');
+
+    if (userId != null && userType != null) {
+      return {'userId': userId, 'userType': userType};
+    }
+    return null;
+  }
+
+  /// Выход из системы
+  Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userId');
+    await prefs.remove('userType');
   }
 }
