@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:pot/screens/company_dashboard/graphics_screen.dart';
 import 'package:pot/screens/company_dashboard/profile/profile_items.dart';
 import 'package:pot/screens/welcome_screen.dart';
 import 'package:pot/services/auth_service.dart';
@@ -36,6 +38,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       _companyId = id;
       _pages = [
         if (_companyId != null) CompanyEmployeesPage(companyId: _companyId!),
+        const GraphicsScreen(),
         const CompanyDocumentsPage(),
         if (_companyId != null) ProfileItems(companyId: _companyId!),
       ];
@@ -84,6 +87,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Employees'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Graphics'),
           BottomNavigationBarItem(icon: Icon(Icons.file_copy), label: 'Documents'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
