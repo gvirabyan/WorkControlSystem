@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:pot/services/auth_service.dart';
 import 'package:pot/ui_elements/app_input_field.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -13,8 +15,10 @@ class _SettingsPageState extends State<SettingsPage> {
   final _oldPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool _notificationsEnabled = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -22,6 +26,38 @@ class _SettingsPageState extends State<SettingsPage> {
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _changePassword() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      if (userId == null) throw Exception("User not logged in");
+
+      await _authService.changePassword(
+        userId,
+        _oldPasswordController.text,
+        _newPasswordController.text,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Password changed successfully")),
+      );
+
+      _oldPasswordController.clear();
+      _newPasswordController.clear();
+      _confirmPasswordController.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: ${e.toString()}")),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -50,7 +86,7 @@ class _SettingsPageState extends State<SettingsPage> {
               label: "Old Password",
               obscureText: true,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -78,12 +114,14 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: () {
-                if (_formKey.currentState!.validate()) {
-                  // Password change logic will go here
-                }
-              },
-              child: const Text("Save Changes"),
+              onPressed: _isLoading ? null : _changePassword,
+              child: _isLoading
+                  ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+                  : const Text("Save Changes"),
             ),
           ],
         ),

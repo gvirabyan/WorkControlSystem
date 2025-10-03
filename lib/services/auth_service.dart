@@ -124,4 +124,21 @@ class AuthService {
     await prefs.remove('userId');
     await prefs.remove('userType');
   }
+
+  /// Смена пароля
+  Future<void> changePassword(
+      String userId, String oldPassword, String newPassword) async {
+    final docRef = users.doc(userId);
+    final doc = await docRef.get();
+
+    if (!doc.exists) throw Exception("User not found");
+
+    final data = doc.data();
+    if (data!['password'] != hashPassword(oldPassword)) {
+      throw Exception("Incorrect old password");
+    }
+
+    final hashedNewPassword = hashPassword(newPassword);
+    await docRef.update({'password': hashedNewPassword});
+  }
 }
