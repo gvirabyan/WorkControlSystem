@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
 
-class AppInputField extends StatelessWidget {
-  final TextEditingController controller;
+class AppDropdownFormField extends StatelessWidget {
   final String label;
-  final String? hint;
-  final bool obscureText;
-  final TextInputType keyboardType;
-  final Widget? suffixIcon;
+  final String? value;
+  final List<String> items;
+  final void Function(String?)? onChanged;
   final String? Function(String?)? validator;
-  final bool enabled;
-  final int? maxLines;
+  final String? hint;
 
-  const AppInputField({
+  const AppDropdownFormField({
     super.key,
-    required this.controller,
     required this.label,
-    this.hint,
-    this.obscureText = false,
-    this.keyboardType = TextInputType.text,
-    this.suffixIcon,
+    this.value,
+    required this.items,
+    this.onChanged,
     this.validator,
-    this.enabled = true,
-    this.maxLines = 1,
+    this.hint,
   });
 
   @override
@@ -38,13 +32,16 @@ class AppInputField extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        TextFormField(
-          controller: controller,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
+        DropdownButtonFormField<String>(
+          value: value,
+          items: items.map((String value) {
+            return DropdownMenuItem<String>(
+              value: value,
+              child: Text(value),
+            );
+          }).toList(),
+          onChanged: onChanged,
           validator: validator,
-          enabled: enabled,
-          maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(color: Colors.grey),
@@ -54,7 +51,6 @@ class AppInputField extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
             ),
-            suffixIcon: suffixIcon,
           ),
         ),
       ],

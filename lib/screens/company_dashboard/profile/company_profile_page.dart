@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/ui_elements/app_input_field.dart';
 import '../../../services/company_profile_service.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -86,7 +87,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _technicalContactController.text = data['technicalContact'] ?? '';
 
       setState(() {
-        _socialSecurityNumberNotApplicable = data['socialSecurityNumber'] == 'not applicable';
+        _socialSecurityNumberNotApplicable =
+            data['socialSecurityNumber'] == 'not applicable';
         _websiteNotApplicable = data['website'] == 'not applicable';
       });
     }
@@ -105,11 +107,15 @@ class _ProfilePageState extends State<ProfilePage> {
       registeredAddress: _registeredAddressController.text.trim(),
       registrationNumber: _registrationNumberController.text.trim(),
       vatNumber: _vatNumberController.text.trim(),
-      socialSecurityNumber: _socialSecurityNumberNotApplicable ? 'not applicable' : _socialSecurityNumberController.text.trim(),
+      socialSecurityNumber: _socialSecurityNumberNotApplicable
+          ? 'not applicable'
+          : _socialSecurityNumberController.text.trim(),
       sectorOfActivity: _sectorOfActivityController.text.trim(),
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
-      website: _websiteNotApplicable ? 'not applicable' : _websiteController.text.trim(),
+      website: _websiteNotApplicable
+          ? 'not applicable'
+          : _websiteController.text.trim(),
       managerFirstName: _managerFirstNameController.text.trim(),
       managerLastName: _managerLastNameController.text.trim(),
       managerPosition: _managerPositionController.text.trim(),
@@ -149,57 +155,65 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 30),
-            const Text("Company Information", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("Company Information",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _officialCompanyNameController,
-              hint: "Official company name",
+              label: "Official company name",
               keyboardType: TextInputType.name,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _registeredAddressController,
-              hint: "Registered address",
+              label: "Registered address",
               keyboardType: TextInputType.streetAddress,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _registrationNumberController,
-              hint: "Registration number / RCS number",
+              label: "Registration number / RCS number",
               keyboardType: TextInputType.text,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _vatNumberController,
-              hint: "VAT number",
+              label: "VAT number",
               keyboardType: TextInputType.text,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _sectorOfActivityController,
-              hint: "Sector of activity / NACE code",
+              label: "Sector of activity / NACE code",
               keyboardType: TextInputType.text,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _phoneController,
-              hint: "Phone",
+              label: "Phone",
               keyboardType: TextInputType.phone,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _emailController,
-              hint: "Email",
+              label: "Email",
               keyboardType: TextInputType.emailAddress,
               validator: (value) {
                 if (value == null || value.isEmpty) return "Field required";
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                    .hasMatch(value)) {
                   return "Invalid email";
                 }
                 return null;
@@ -220,12 +234,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 });
               },
             ),
-            _buildTextFormField(
+            AppInputField(
               controller: _socialSecurityNumberController,
-              hint: "Social security number",
+              label: "Social security number",
               keyboardType: TextInputType.text,
               enabled: !_socialSecurityNumberNotApplicable,
-              validator: (value) => !_socialSecurityNumberNotApplicable && (value == null || value.isEmpty) ? "Field required" : null,
+              validator: (value) => !_socialSecurityNumberNotApplicable &&
+                      (value == null || value.isEmpty)
+                  ? "Field required"
+                  : null,
             ),
             const SizedBox(height: 16),
             CheckboxListTile(
@@ -242,56 +259,66 @@ class _ProfilePageState extends State<ProfilePage> {
                 });
               },
             ),
-            _buildTextFormField(
+            AppInputField(
               controller: _websiteController,
-              hint: "Website",
+              label: "Website",
               keyboardType: TextInputType.url,
               enabled: !_websiteNotApplicable,
-              validator: (value) => !_websiteNotApplicable && (value == null || value.isEmpty) ? "Field required" : null,
+              validator: (value) =>
+                  !_websiteNotApplicable && (value == null || value.isEmpty)
+                      ? "Field required"
+                      : null,
             ),
             const SizedBox(height: 30),
-            const Text("Responsible Persons", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("Responsible Persons",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _managerFirstNameController,
-              hint: "Manager's first name",
+              label: "Manager's first name",
               keyboardType: TextInputType.name,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _managerLastNameController,
-              hint: "Manager's last name",
+              label: "Manager's last name",
               keyboardType: TextInputType.name,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _managerPositionController,
-              hint: "Manager's position",
+              label: "Manager's position",
               keyboardType: TextInputType.text,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _hrManagerFirstNameController,
-              hint: "HR manager's first name",
+              label: "HR manager's first name",
               keyboardType: TextInputType.name,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _hrManagerLastNameController,
-              hint: "HR manager's last name",
+              label: "HR manager's last name",
               keyboardType: TextInputType.name,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            _buildTextFormField(
+            AppInputField(
               controller: _technicalContactController,
-              hint: "Technical contact person",
+              label: "Technical contact person",
               keyboardType: TextInputType.text,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 30),
             SizedBox(
@@ -319,30 +346,6 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextFormField({
-    required TextEditingController controller,
-    required String hint,
-    required String? Function(String?) validator,
-    required TextInputType keyboardType,
-    bool enabled = true,
-  }) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      keyboardType: keyboardType,
-      enabled: enabled,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.blue.shade50,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
         ),
       ),
     );

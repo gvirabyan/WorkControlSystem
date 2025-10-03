@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/ui_elements/app_input_field.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -41,33 +42,37 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             const SizedBox(height: 30),
-            const Text("Change Password", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text("Change Password",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
-            TextFormField(
+            AppInputField(
               controller: _oldPasswordController,
-              decoration: const InputDecoration(labelText: "Old Password"),
+              label: "Old Password",
               obscureText: true,
-              validator: (value) => value == null || value.isEmpty ? "Field required" : null,
+              validator: (value) =>
+                  value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppInputField(
               controller: _newPasswordController,
-              decoration: const InputDecoration(labelText: "New Password"),
+              label: "New Password",
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) return "Field required";
-                if (value.length < 6) return "Password must be at least 6 characters long";
+                if (value.length < 6)
+                  return "Password must be at least 6 characters long";
                 return null;
               },
             ),
             const SizedBox(height: 16),
-            TextFormField(
+            AppInputField(
               controller: _confirmPasswordController,
-              decoration: const InputDecoration(labelText: "Confirm New Password"),
+              label: "Confirm New Password",
               obscureText: true,
               validator: (value) {
                 if (value == null || value.isEmpty) return "Field required";
-                if (value != _newPasswordController.text) return "Passwords do not match";
+                if (value != _newPasswordController.text)
+                  return "Passwords do not match";
                 return null;
               },
             ),

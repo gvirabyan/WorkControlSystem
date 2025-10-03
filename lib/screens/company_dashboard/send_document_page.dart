@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:pot/models/UserModel.dart';
 import 'package:pot/models/document_model.dart';
 import 'package:pot/services/firestore_service.dart';
+import 'package:pot/ui_elements/app_dropdown_form_field.dart';
+import 'package:pot/ui_elements/app_input_field.dart';
 
 class SendDocumentPage extends StatefulWidget {
   final Function(Document) onSend;
@@ -146,12 +148,9 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                     .toList(),
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              AppInputField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Title',
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter a title';
@@ -160,18 +159,10 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                 },
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
+              AppDropdownFormField(
                 value: _selectedDocumentType,
-                decoration: const InputDecoration(
-                  labelText: 'Document Type',
-                  border: OutlineInputBorder(),
-                ),
-                items: _documentTypes.map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
+                label: 'Document Type',
+                items: _documentTypes,
                 onChanged: (newValue) {
                   setState(() {
                     _selectedDocumentType = newValue;
@@ -185,12 +176,9 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              AppInputField(
                 controller: _messageController,
-                decoration: const InputDecoration(
-                  labelText: 'Message',
-                  border: OutlineInputBorder(),
-                ),
+                label: 'Message',
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
