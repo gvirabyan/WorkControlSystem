@@ -67,28 +67,28 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                 child: _isLoadingEmployees
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _employees.length,
-                        itemBuilder: (context, index) {
-                          final employee = _employees[index];
-                          final isSelected = tempSelectedEmployees
-                              .any((e) => e.id == employee.id);
-                          return CheckboxListTile(
-                            title: Text(employee.name),
-                            value: isSelected,
-                            onChanged: (value) {
-                              setState(() {
-                                if (value!) {
-                                  tempSelectedEmployees.add(employee);
-                                } else {
-                                  tempSelectedEmployees
-                                      .removeWhere((e) => e.id == employee.id);
-                                }
-                              });
-                            },
-                          );
-                        },
-                      ),
+                  shrinkWrap: true,
+                  itemCount: _employees.length,
+                  itemBuilder: (context, index) {
+                    final employee = _employees[index];
+                    final isSelected = tempSelectedEmployees
+                        .any((e) => e.id == employee.id);
+                    return CheckboxListTile(
+                      title: Text(employee.name),
+                      value: isSelected,
+                      onChanged: (value) {
+                        setState(() {
+                          if (value!) {
+                            tempSelectedEmployees.add(employee);
+                          } else {
+                            tempSelectedEmployees
+                                .removeWhere((e) => e.id == employee.id);
+                          }
+                        });
+                      },
+                    );
+                  },
+                ),
               ),
               actions: [
                 TextButton(
@@ -201,18 +201,20 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    final newDocument = Document(
-                      id: '',
-                      title: _titleController.text,
-                      type: _selectedDocumentType!,
-                      message: _messageController.text,
-                      files: _selectedFiles.map((e) => e.path).toList(),
-                      senderId: widget.companyId,
-                      recipientIds:
-                          _selectedEmployees.map((e) => e.id).toList(),
-                      date: DateTime.now(),
-                    );
-                    await widget.onSend(newDocument);
+                    for (final file in _selectedFiles) {
+                      final newDocument = Document(
+                        id: '',
+                        title: _titleController.text,
+                        type: _selectedDocumentType!,
+                        message: _messageController.text,
+                        files: [file.path],
+                        senderId: widget.companyId,
+                        recipientIds:
+                        _selectedEmployees.map((e) => e.id).toList(),
+                        date: DateTime.now(),
+                      );
+                      await widget.onSend(newDocument);
+                    }
                     Navigator.of(context).pop();
                   }
                 },

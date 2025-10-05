@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pot/models/document_model.dart';
+import 'package:pot/screens/company_dashboard/document_details_page.dart';
 import 'package:pot/screens/company_dashboard/document_filter_dialog.dart';
 import 'package:pot/screens/company_dashboard/send_document_page.dart';
 import 'package:pot/services/firestore_service.dart';
@@ -75,16 +76,16 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
                       onPressed: _companyId == null
                           ? null
                           : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SendDocumentPage(
-                                    onSend: _addDocument,
-                                    companyId: _companyId!,
-                                  ),
-                                ),
-                              );
-                            },
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SendDocumentPage(
+                              onSend: _addDocument,
+                              companyId: _companyId!,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.filter_list),
@@ -109,52 +110,61 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
             child: _companyId == null
                 ? const Center(child: CircularProgressIndicator())
                 : StreamBuilder<List<Document>>(
-                    stream: _firestoreService.getDocuments(_companyId!),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      }
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('No documents found.'));
-                      }
-                      final documents = snapshot.data!;
-                      final filteredDocs = documents.where((doc) {
-                        final docDate = doc.date;
-                        if (_startDate != null && docDate.isBefore(_startDate!)) {
-                          return false;
-                        }
-                        if (_endDate != null && docDate.isAfter(_endDate!)) {
-                          return false;
-                        }
-                        final selectedTypes = _documentTypes.entries
-                            .where((entry) => entry.value)
-                            .map((entry) => entry.key)
-                            .toList();
-                        if (selectedTypes.isNotEmpty &&
-                            !selectedTypes.contains(doc.type)) {
-                          return false;
-                        }
-                        return true;
-                      }).toList();
-                      return ListView.builder(
-                        itemCount: filteredDocs.length,
-                        itemBuilder: (context, index) {
-                          final document = filteredDocs[index];
-                          return ListTile(
-                            title: Text(document.title),
-                            subtitle: Text(document.type),
-                            trailing: Text(document.date
-                                .toLocal()
-                                .toString()
-                                .split(' ')[0]),
-                          );
-                        },
-                      );
-                    },
-                  ),
+              stream: _firestoreService.getDocuments(_companyId!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No documents found.'));
+                }
+                final documents = snapshot.data!;
+                final filteredDocs = documents.where((doc) {
+                  final docDate = doc.date;
+                  if (_startDate != null && docDate.isBefore(_startDate!)) {
+                    return false;
+                  }
+                  if (_endDate != null && docDate.isAfter(_endDate!)) {
+                    return false;
+                  }
+                  final selectedTypes = _documentTypes.entries
+                      .where((entry) => entry.value)
+                      .map((entry) => entry.key)
+                      .toList();
+                  if (selectedTypes.isNotEmpty &&
+                      !selectedTypes.contains(doc.type)) {
+                    return false;
+                  }
+                  return true;
+                }).toList();
+                return ListView.builder(
+                  itemCount: filteredDocs.length,
+                  itemBuilder: (context, index) {
+                    final document = filteredDocs[index];
+                    return ListTile(
+                      title: Text(document.title),
+                      subtitle: Text(document.type),
+                      trailing: Text(document.date
+                          .toLocal()
+                          .toString()
+                          .split(' ')[0]),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DocumentDetailsPage(document: document),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
