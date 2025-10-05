@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 class AvatarUploader extends StatefulWidget {
-  final String userId; // например, UID пользователя
+  final String userId; // UID пользователя
   const AvatarUploader({super.key, required this.userId});
 
   @override
@@ -17,6 +17,8 @@ class _AvatarUploaderState extends State<AvatarUploader> {
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
+  final supabase = Supabase.instance.client;
+
   Future<void> _pickAndUploadAvatar() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile == null) return;
@@ -27,21 +29,25 @@ class _AvatarUploaderState extends State<AvatarUploader> {
     });
 
     try {
-      // 1️⃣ Загружаем в Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('avatars/${widget.userId}.jpg');
+      // Генерируем уникальное имя файла
+      final fileId = const Uuid().v4();
+      final fileExt = pickedFile.path.split('.').last;
+      final fileName = '$fileId.$fileExt';
 
-      await storageRef.putFile(_image!);
+      // 1️⃣ Загружаем в Supabase Storage (bucket 'avatars')
+      final response = await supabase.storage
+          .from('avatars')
+          .upload(fileName, _image!);
+
+      if (response.error != null) {
+        throw Exception(response.error!.message);
+      }
 
       // 2️⃣ Получаем публичный URL
-      final downloadUrl = await storageRef.getDownloadURL();
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName).data;
 
-      // 3️⃣ Сохраняем URL в Firestore
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .update({'avatarUrl': downloadUrl});
+      // 3️⃣ Сохраняем URL в таблице 'users'
+      await supabase.from('users').update({'avatar_url': publicUrl}).eq('id', widget.userId);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Аватар успешно обновлён ✅')),
