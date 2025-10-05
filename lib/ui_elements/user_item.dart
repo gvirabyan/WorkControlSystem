@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/UserModel.dart';
+import '../screens/company_dashboard/employee_info_page.dart';
 
 class UserItem extends StatelessWidget {
   final UserModel user;
@@ -18,6 +19,14 @@ class UserItem extends StatelessWidget {
             : null,
       ),
       title: Text(user.name),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EmployeeInfoPage(userId: user.id),
+          ),
+        );
+      },
     );
   }
 }

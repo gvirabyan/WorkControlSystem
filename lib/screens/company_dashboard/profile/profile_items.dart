@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:pot/screens/company_dashboard/profile/plans_page.dart';
 import 'package:pot/screens/company_dashboard/profile/privacy_policy_page.dart';
@@ -5,6 +6,8 @@ import 'package:pot/screens/company_dashboard/profile/settings_page.dart';
 import 'package:pot/screens/welcome_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'company_profile_page.dart';
 import 'help_page.dart';
@@ -21,14 +24,14 @@ class _ProfileItemsState extends State<ProfileItems> {
   Widget? _selectedPage;
   String? _selectedPageTitle;
   String? _companyName;
+  String? _avatarUrl; // <-- URL аватара из Firestore
+  bool _isUploading = false;
 
-  // Меню с иконкой, заголовком и страницей
   late final List<Map<String, dynamic>> _menuItems;
 
   @override
   void initState() {
     super.initState();
-
     _menuItems = [
       {
         'icon': Icons.person_outline,
@@ -57,23 +60,63 @@ class _ProfileItemsState extends State<ProfileItems> {
       },
     ];
 
-    _loadCompanyName();
+    _loadCompanyData();
   }
 
-  Future<void> _loadCompanyName() async {
+  Future<void> _loadCompanyData() async {
     try {
       final doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(widget.companyId)
           .get();
 
-      if (doc.exists && doc.data()!.containsKey('name')) {
+      if (doc.exists) {
+        final data = doc.data()!;
         setState(() {
-          _companyName = doc['name'];
+          _companyName = data['name'];
+          _avatarUrl = data['avatarUrl']; // <-- Загружаем URL, если есть
         });
       }
     } catch (e) {
       debugPrint("Ошибка при загрузке компании: $e");
+    }
+  }
+
+  Future<void> _pickAndUploadAvatar() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (picked == null) return;
+
+    setState(() => _isUploading = true);
+
+    try {
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('avatars/${widget.companyId}.jpg');
+
+      await storageRef.putFile(File(picked.path));
+      final url = await storageRef.getDownloadURL();
+
+      // Сохраняем URL в Firestore
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.companyId)
+          .update({'avatarUrl': url});
+
+      setState(() {
+        _avatarUrl = url;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Аватар успешно обновлён ✅")),
+      );
+    } catch (e) {
+      debugPrint("Ошибка при загрузке аватара: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Ошибка: $e")),
+      );
+    } finally {
+      setState(() => _isUploading = false);
     }
   }
 
@@ -85,10 +128,25 @@ class _ProfileItemsState extends State<ProfileItems> {
         if (_selectedPage == null) ...[
           Column(
             children: [
-              CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.blue.shade100,
-                child: const Icon(Icons.business, size: 50, color: Colors.blue),
+              GestureDetector(
+                onTap: _isUploading ? null : _pickAndUploadAvatar,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.blue.shade100,
+                      backgroundImage:
+                      _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                      child: _avatarUrl == null
+                          ? const Icon(Icons.business,
+                          size: 50, color: Colors.blue)
+                          : null,
+                    ),
+                    if (_isUploading)
+                      const CircularProgressIndicator(color: Colors.blue),
+                  ],
+                ),
               ),
               const SizedBox(height: 10),
               Text(
@@ -110,7 +168,8 @@ class _ProfileItemsState extends State<ProfileItems> {
               )),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.logout, color: Colors.red, size: 28),
+                leading:
+                const Icon(Icons.logout, color: Colors.red, size: 28),
                 title: const Text(
                   "Logout",
                   style: TextStyle(fontSize: 16, color: Colors.red),

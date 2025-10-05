@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'package:pot/screens/company_dashboard/graphics_screen.dart';
 import 'package:pot/screens/company_dashboard/profile/profile_items.dart';
-import 'package:pot/screens/welcome_screen.dart';
-import 'package:pot/services/auth_service.dart';
 import 'package:pot/ui_elements/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'company_documents_page.dart';
 import 'company_employees_page.dart';
-import 'profile/company_profile_page.dart';
 
 class CompanyDashboard extends StatefulWidget {
   const CompanyDashboard({super.key});
@@ -22,7 +18,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
   int _selectedIndex = 0;
   String? _companyId;
   List<Widget> _pages = [];
-  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -51,16 +46,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     });
   }
 
-  void _logout() async {
-    await _authService.logout();
-    if (mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-            (route) => false,
-      );
-    }
-  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +59,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     return Scaffold(
       appBar: CustomAppBar(
         title: "Company Dashboard",
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _logout,
-          ),
-        ],
+
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -92,7 +73,8 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
+        selectedItemColor: Colors.blueAccent,
+        unselectedItemColor: Colors.cyan,
         onTap: _onItemTapped,
       ),
     );
