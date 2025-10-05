@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class CompanyProfileService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<Map<String, dynamic>?> getCompanyProfile(String companyId) async {
     try {
@@ -33,6 +37,7 @@ class CompanyProfileService {
     required String hrManagerFirstName,
     required String hrManagerLastName,
     required String technicalContact,
+    String? avatarUrl,
   }) async {
     try {
       await _firestore.collection('users').doc(companyId).set({
@@ -51,10 +56,22 @@ class CompanyProfileService {
         'hrManagerFirstName': hrManagerFirstName,
         'hrManagerLastName': hrManagerLastName,
         'technicalContact': technicalContact,
+        'avatarUrl': avatarUrl,
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
       print('Error saving company profile: $e');
+    }
+  }
+
+  Future<String?> uploadAvatar(String companyId, File image) async {
+    try {
+      final ref = _storage.ref().child('avatars').child('$companyId.jpg');
+      await ref.putFile(image);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print('Error uploading avatar: $e');
+      return null;
     }
   }
 }

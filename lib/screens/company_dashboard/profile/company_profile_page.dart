@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pot/ui_elements/app_input_field.dart';
 import '../../../services/company_profile_service.dart';
 
@@ -38,7 +40,20 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isLoading = false;
   bool _isFetching = true;
 
+  File? _image;
+  String? _avatarUrl;
+  final _picker = ImagePicker();
+
   final _service = CompanyProfileService();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -90,6 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
         _socialSecurityNumberNotApplicable =
             data['socialSecurityNumber'] == 'not applicable';
         _websiteNotApplicable = data['website'] == 'not applicable';
+        _avatarUrl = data['avatarUrl'];
       });
     }
 
@@ -100,6 +116,11 @@ class _ProfilePageState extends State<ProfilePage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
+
+    String? avatarUrl = _avatarUrl;
+    if (_image != null) {
+      avatarUrl = await _service.uploadAvatar(widget.companyId, _image!);
+    }
 
     await _service.saveCompanyProfile(
       companyId: widget.companyId,
@@ -122,6 +143,7 @@ class _ProfilePageState extends State<ProfilePage> {
       hrManagerFirstName: _hrManagerFirstNameController.text.trim(),
       hrManagerLastName: _hrManagerLastNameController.text.trim(),
       technicalContact: _technicalContactController.text.trim(),
+      avatarUrl: avatarUrl,
     );
 
     setState(() => _isLoading = false);
@@ -155,6 +177,28 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 30),
+            Center(
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _image != null
+                        ? FileImage(_image!)
+                        : _avatarUrl != null
+                        ? NetworkImage(_avatarUrl!)
+                        : null,
+                    child: _image == null && _avatarUrl == null
+                        ? const Icon(Icons.business, size: 50)
+                        : null,
+                  ),
+                  TextButton(
+                    onPressed: _pickImage,
+                    child: const Text("Change avatar"),
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
             const Text("Company Information",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
@@ -163,7 +207,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Official company name",
               keyboardType: TextInputType.name,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -171,7 +215,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Registered address",
               keyboardType: TextInputType.streetAddress,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -179,7 +223,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Registration number / RCS number",
               keyboardType: TextInputType.text,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -187,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "VAT number",
               keyboardType: TextInputType.text,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -195,7 +239,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Sector of activity / NACE code",
               keyboardType: TextInputType.text,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -203,7 +247,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Phone",
               keyboardType: TextInputType.phone,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -240,7 +284,7 @@ class _ProfilePageState extends State<ProfilePage> {
               keyboardType: TextInputType.text,
               enabled: !_socialSecurityNumberNotApplicable,
               validator: (value) => !_socialSecurityNumberNotApplicable &&
-                      (value == null || value.isEmpty)
+                  (value == null || value.isEmpty)
                   ? "Field required"
                   : null,
             ),
@@ -265,9 +309,9 @@ class _ProfilePageState extends State<ProfilePage> {
               keyboardType: TextInputType.url,
               enabled: !_websiteNotApplicable,
               validator: (value) =>
-                  !_websiteNotApplicable && (value == null || value.isEmpty)
-                      ? "Field required"
-                      : null,
+              !_websiteNotApplicable && (value == null || value.isEmpty)
+                  ? "Field required"
+                  : null,
             ),
             const SizedBox(height: 30),
             const Text("Responsible Persons",
@@ -278,7 +322,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Manager's first name",
               keyboardType: TextInputType.name,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -286,7 +330,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Manager's last name",
               keyboardType: TextInputType.name,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -294,7 +338,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Manager's position",
               keyboardType: TextInputType.text,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -302,7 +346,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "HR manager's first name",
               keyboardType: TextInputType.name,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -310,7 +354,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "HR manager's last name",
               keyboardType: TextInputType.name,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
@@ -318,7 +362,7 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Technical contact person",
               keyboardType: TextInputType.text,
               validator: (value) =>
-                  value == null || value.isEmpty ? "Field required" : null,
+              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 30),
             SizedBox(
@@ -335,13 +379,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 3,
-                        ),
-                      )
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 3,
+                  ),
+                )
                     : const Text("Save"),
               ),
             ),

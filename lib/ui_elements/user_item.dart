@@ -12,6 +12,7 @@ class UserItem extends StatelessWidget {
     return ListTile(
       leading: CircleAvatar(
         radius: 24,
+        backgroundColor: Colors.grey[200],
         backgroundImage:
         user.avatarUrl.isNotEmpty ? NetworkImage(user.avatarUrl) : null,
         child: user.avatarUrl.isEmpty
