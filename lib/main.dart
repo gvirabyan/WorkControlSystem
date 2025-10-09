@@ -1,9 +1,8 @@
 import 'package:pot/screens/company_dashboard/company_dashboard_screen.dart';
-import 'package:pot/screens/company_dashboard/graphics_screen.dart';
+import 'package:pot/screens/company_dashboard/graphic/employee_data_table.dart';
 import 'package:pot/screens/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
@@ -15,10 +14,10 @@ void main() async{
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await Supabase.initialize(
-    url: 'https://vfeyzxfbyrdffnvabfms.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmZXl6eGZieXJkZmZudmFiZm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODU4OTUsImV4cCI6MjA3NTI2MTg5NX0.9c1aFHXS4QSQTcazpRYE80LxPGhCSNFkc6Tdcl1dfbo',        // вставь сюда anon public key
-  );
+  // await Supabase.initialize(
+  //   url: 'https://vfeyzxfbyrdffnvabfms.supabase.co',
+  //   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmZXl6eGZieXJkZmZudmFiZm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODU4OTUsImV4cCI6MjA3NTI2MTg5NX0.9c1aFHXS4QSQTcazpRYE80LxPGhCSNFkc6Tdcl1dfbo',        // вставь сюда anon public key
+  // );
   runApp(const MyApp());
 }
 

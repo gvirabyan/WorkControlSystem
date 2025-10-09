@@ -44,7 +44,6 @@ dependencies:
   file_picker: ^8.0.6
   image_picker: ^1.0.5
   firebase_storage: ^12.4.10
-  supabase_flutter: ^1.0.0
 
 
 

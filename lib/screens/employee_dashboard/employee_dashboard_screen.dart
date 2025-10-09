@@ -13,15 +13,22 @@ class EmployeeDashboard extends StatefulWidget {
 }
 
 class _EmployeeDashboardState extends State<EmployeeDashboard> {
-  int _selectedIndex = 0; // Индекс выбранной вкладки
+  int _selectedIndex = 0;
   final AuthService _authService = AuthService();
+  String? _userId;
 
-  // Список виджетов-страниц
-  final List<Widget> _pages = [
-    const HomePage(),
-    const HistoryPage(),
-    const DocumentsPage(),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  Future<void> _loadUserId() async {
+    final userData = await _authService.checkCurrentUser();
+    setState(() {
+      _userId = userData?['userId'];
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -42,6 +49,19 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    if (_userId == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Передаём userId в страницы
+    final List<Widget> _pages = [
+      HomePage(userId: _userId!),
+      HistoryPage(),
+      DocumentsPage(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Employee Dashboard"),

@@ -1,27 +1,78 @@
 import 'package:flutter/material.dart';
-import 'dart:async'; // Импортируем для работы с таймером
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String userId;
+
+  const HomePage({super.key, required this.userId});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  // Переменная для отслеживания состояния работы
   bool _isWorking = false;
-  // Переменная для отслеживания состояния перерыва
   bool _isOnBreak = false;
-  // Таймер для отслеживания времени
   Timer? _timer;
-  // Общее количество секунд
   int _totalSeconds = 0;
+
+  final usersCollection = FirebaseFirestore.instance.collection('users');
+  final historyCollection = FirebaseFirestore.instance.collection('employee_action_history');
+
+  DocumentReference? _currentActionDoc;
+
+  String _name = '';
+  String _contact = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+    _loadCurrentStatus();
+  }
 
   @override
   void dispose() {
     _timer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final doc = await usersCollection.doc(widget.userId).get();
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    setState(() {
+      _name = data['name'] ?? '';
+      _contact = data['emailOrPhone'] ?? '';
+    });
+  }
+
+  Future<void> _loadCurrentStatus() async {
+    final doc = await usersCollection.doc(widget.userId).get();
+    if (!doc.exists) return;
+
+    final data = doc.data()!;
+    final status = data['currentStatus'] ?? 'Not Working';
+    setState(() {
+      _isWorking = status != 'Not Working';
+      _isOnBreak = status == 'On Break';
+    });
+
+    if (_isWorking && !_isOnBreak) {
+      _startTimer();
+    }
+
+    // Проверяем наличие незавершённого действия
+    final query = await historyCollection
+        .where('userId', isEqualTo: widget.userId)
+        .where('datetimeEnd', isEqualTo: null)
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      _currentActionDoc = query.docs.first.reference;
+    }
   }
 
   void _startTimer() {
@@ -42,31 +93,72 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _toggleWorkState() {
-    if (_isWorking) {
-      // Если работаем, то завершаем работу
-      _pauseTimer();
-      _resetTimer();
-    } else {
-      // Если не работаем, то начинаем
-      _startTimer();
+  Future<void> _startAction(String action) async {
+    // Завершаем текущее действие
+    if (_currentActionDoc != null) {
+      await _currentActionDoc!.update({
+        'datetimeEnd': FieldValue.serverTimestamp(),
+      });
     }
 
-    setState(() {
-      _isWorking = !_isWorking;
-      _isOnBreak = false; // Сброс состояния перерыва
+    // Создаём новую запись в истории
+    final newDoc = await historyCollection.add({
+      'userId': widget.userId,
+      'name': _name,
+      'contact': _contact,
+      'action': action,
+      'datetimeStart': FieldValue.serverTimestamp(),
+      'datetimeEnd': null,
     });
+
+    _currentActionDoc = newDoc;
+
+    // Обновляем статус в users
+    await usersCollection.doc(widget.userId).update({'currentStatus': action});
   }
 
-  void _toggleBreakState() {
-    setState(() {
-      _isOnBreak = !_isOnBreak;
-    });
+  Future<void> _endAction() async {
+    if (_currentActionDoc != null) {
+      await _currentActionDoc!.update({
+        'datetimeEnd': FieldValue.serverTimestamp(),
+      });
+      _currentActionDoc = null;
+    }
+    await usersCollection.doc(widget.userId).update({'currentStatus': 'Not Working'});
+  }
 
-    if (_isOnBreak) {
+  void _toggleWorkState() async {
+    if (_isWorking) {
       _pauseTimer();
+      _resetTimer();
+      await _endAction();
+      setState(() {
+        _isWorking = false;
+        _isOnBreak = false;
+      });
     } else {
       _startTimer();
+      await _startAction('Working');
+      setState(() {
+        _isWorking = true;
+        _isOnBreak = false;
+      });
+    }
+  }
+
+  void _toggleBreakState() async {
+    if (_isOnBreak) {
+      _startTimer();
+      await _startAction('Working');
+      setState(() {
+        _isOnBreak = false;
+      });
+    } else {
+      _pauseTimer();
+      await _startAction('On Break');
+      setState(() {
+        _isOnBreak = true;
+      });
     }
   }
 
@@ -74,12 +166,7 @@ class _HomePageState extends State<HomePage> {
     int hours = totalSeconds ~/ 3600;
     int minutes = (totalSeconds % 3600) ~/ 60;
     int seconds = totalSeconds % 60;
-
-    String hoursStr = hours.toString().padLeft(2, '0');
-    String minutesStr = minutes.toString().padLeft(2, '0');
-    String secondsStr = seconds.toString().padLeft(2, '0');
-
-    return '$hoursStr:$minutesStr:$secondsStr';
+    return '${hours.toString().padLeft(2,'0')}:${minutes.toString().padLeft(2,'0')}:${seconds.toString().padLeft(2,'0')}';
   }
 
   @override
@@ -89,9 +176,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            _isWorking
-                ? (_isOnBreak ? 'On Break' : 'Currently Working')
-                : 'Not Working',
+            _isWorking ? (_isOnBreak ? 'On Break' : 'Currently Working') : 'Not Working',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
@@ -102,19 +187,16 @@ class _HomePageState extends State<HomePage> {
             ),
           const SizedBox(height: 30),
           if (!_isWorking)
-          // Кнопка "Start Work", если не работаем
             ElevatedButton(
               onPressed: _toggleWorkState,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: const Text('Start Work'),
             )
           else if (_isWorking && !_isOnBreak)
-          // Кнопки "Finish Work" и "Break", если работаем
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -123,8 +205,7 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   ),
                   child: const Text('Finish Work'),
                 ),
@@ -134,22 +215,19 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 30, vertical: 15),
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   ),
                   child: const Text('Break'),
                 ),
               ],
             )
           else
-          // Кнопка "Continue Work", если на перерыве
             ElevatedButton(
               onPressed: _toggleBreakState,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: const Text('Continue Work'),
             ),

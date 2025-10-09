@@ -63,18 +63,42 @@ class AuthService {
         'promoCode': promoCode,
         'created_at': FieldValue.serverTimestamp(),
       });
-    } else if (promoCodeForEmployee != null) {
-      // Сотрудник → сохраняем promoCode
-      userData['promoCode'] = promoCodeForEmployee;
+    } else if (type == 'employee') {
+      if (promoCodeForEmployee != null) {
+        userData['promoCode'] = promoCodeForEmployee;
+      }
+
+      // ✅ Добавляем дефолтные данные для сотрудника
+      userData.addAll({
+        'startDate': '09:00',
+        'endDate': '18:00',
+        'status': 'Not started',
+        'task': 'No task assigned',
+        'workedHours': '0',
+        'weeklyHours': '40',
+      });
     }
 
-    // Создаём уникальный doc ID
+    // Создаём уникальный doc ID для сотрудника
     final docRef = users.doc();
     await docRef.set(userData);
 
-    // Возвращаем ID документа
+    // 🔹 Создаём пустой документ в коллекции vacations для нового сотрудника
+    if (type == 'employee') {
+      await FirebaseFirestore.instance.collection('vacations').add({
+        'userId': docRef.id,
+        'name': name,
+        'emailOrPhone': emailOrPhone,
+        'vacationStartDate': '', // пусто пока отпуск не задан
+        'vacationEndDate': '',
+        'vacationReason': '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+
     return docRef.id;
   }
+
 
   /// Проверка промокода
   Future<bool> promoCodeExists(String code) async {
