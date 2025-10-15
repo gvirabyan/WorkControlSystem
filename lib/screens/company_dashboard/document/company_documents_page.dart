@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pot/models/document_model.dart';
-import 'package:pot/screens/company_dashboard/document_details_page.dart';
-import 'package:pot/screens/company_dashboard/document_filter_dialog.dart';
-import 'package:pot/screens/company_dashboard/send_document_page.dart';
+import 'package:pot/screens/company_dashboard/document/document_details_page.dart';
+import 'package:pot/screens/company_dashboard/document/document_filter_dialog.dart';
+import 'package:pot/screens/company_dashboard/document/send_document_page.dart';
 import 'package:pot/services/firestore_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

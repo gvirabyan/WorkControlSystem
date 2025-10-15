@@ -49,7 +49,7 @@ class CompanyEmployeesPage extends StatelessWidget {
               }
 
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(child: Text('No employees found'));
+                return const Center(child: Text('No staff found'));
               }
 
               final users = snapshot.data!.docs

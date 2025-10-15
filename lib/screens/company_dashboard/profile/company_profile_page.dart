@@ -5,7 +5,7 @@ import 'package:pot/ui_elements/app_input_field.dart';
 import '../../../services/company_profile_service.dart';
 
 class ProfilePage extends StatefulWidget {
-  final String companyId; // передаём ID компании
+  final String companyId;
   const ProfilePage({super.key, required this.companyId});
 
   @override
@@ -17,6 +17,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Company information
   final _officialCompanyNameController = TextEditingController();
+  final _commercialNameController = TextEditingController(); // ✅ добавлено
   final _registeredAddressController = TextEditingController();
   final _registrationNumberController = TextEditingController();
   final _vatNumberController = TextEditingController();
@@ -64,6 +65,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void dispose() {
     _officialCompanyNameController.dispose();
+    _commercialNameController.dispose(); // ✅ добавлено
     _registeredAddressController.dispose();
     _registrationNumberController.dispose();
     _vatNumberController.dispose();
@@ -86,6 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (data != null) {
       _officialCompanyNameController.text = data['officialCompanyName'] ?? '';
+      _commercialNameController.text = data['commercialName'] ?? '';
       _registeredAddressController.text = data['registeredAddress'] ?? '';
       _registrationNumberController.text = data['registrationNumber'] ?? '';
       _vatNumberController.text = data['vatNumber'] ?? '';
@@ -125,6 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await _service.saveCompanyProfile(
       companyId: widget.companyId,
       officialCompanyName: _officialCompanyNameController.text.trim(),
+      commercialName: _commercialNameController.text.trim(), // ✅ добавлено
       registeredAddress: _registeredAddressController.text.trim(),
       registrationNumber: _registrationNumberController.text.trim(),
       vatNumber: _vatNumberController.text.trim(),
@@ -202,6 +206,8 @@ class _ProfilePageState extends State<ProfilePage> {
             const Text("Company Information",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
+
+            // ✅ Official name
             AppInputField(
               controller: _officialCompanyNameController,
               label: "Official company name",
@@ -209,6 +215,17 @@ class _ProfilePageState extends State<ProfilePage> {
               validator: (value) =>
               value == null || value.isEmpty ? "Field required" : null,
             ),
+
+            // ✅ Commercial name (новое поле)
+            const SizedBox(height: 16),
+            AppInputField(
+              controller: _commercialNameController,
+              label: "Commercial name",
+              keyboardType: TextInputType.name,
+              validator: (value) =>
+              value == null || value.isEmpty ? "Field required" : null,
+            ),
+
             const SizedBox(height: 16),
             AppInputField(
               controller: _registeredAddressController,

@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
@@ -7,6 +6,7 @@ class CompanyProfileService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
+  /// Получаем профиль компании
   Future<Map<String, dynamic>?> getCompanyProfile(String companyId) async {
     try {
       final doc = await _firestore.collection('users').doc(companyId).get();
@@ -20,9 +20,11 @@ class CompanyProfileService {
     }
   }
 
+  /// Сохраняем профиль компании
   Future<void> saveCompanyProfile({
     required String companyId,
     required String officialCompanyName,
+    required String commercialName, // 🔹 новое поле
     required String registeredAddress,
     required String registrationNumber,
     required String vatNumber,
@@ -42,6 +44,7 @@ class CompanyProfileService {
     try {
       await _firestore.collection('users').doc(companyId).set({
         'officialCompanyName': officialCompanyName,
+        'commercialName': commercialName, // 🔹 сохраняем новое поле
         'registeredAddress': registeredAddress,
         'registrationNumber': registrationNumber,
         'vatNumber': vatNumber,
@@ -64,6 +67,7 @@ class CompanyProfileService {
     }
   }
 
+  /// Загружаем аватар в Firebase Storage
   Future<String?> uploadAvatar(String companyId, File image) async {
     try {
       final ref = _storage.ref().child('avatars').child('$companyId.jpg');
@@ -75,4 +79,3 @@ class CompanyProfileService {
     }
   }
 }
-

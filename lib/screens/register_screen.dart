@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../ui_elements//app_input_field.dart'; // импортим твой общий инпут
+import '../ui_elements/app_input_field.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -20,6 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _isCompany = false;
   bool _isLoading = false;
+
   final auth = AuthService();
 
   void _submitForm() async {
@@ -38,7 +39,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.pushReplacementNamed(context, '/company');
       } else {
         final promoCode = _promoCodeController.text.trim();
-        if (promoCode.isEmpty) throw Exception("Promo code is required for employee");
+        if (promoCode.isEmpty) {
+          throw Exception("Promo code is required for employee");
+        }
 
         final exists = await auth.promoCodeExists(promoCode);
         if (!exists) throw Exception("Invalid promo code");
@@ -113,12 +116,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Name
+                // Full Name
                 AppInputField(
                   controller: _nameController,
                   label: "Full Name",
-                  hint: "Enter your name",
+                  hint: "Enter your name and surname",
                   keyboardType: TextInputType.name,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your full name';
+                    }
+                    final parts = value.trim().split(RegExp(r'\s+'));
+                    if (parts.length < 2) {
+                      return 'Please enter both name and surname';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -128,6 +141,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: "Email or Phone",
                   hint: "Enter your email or phone number",
                   keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your email or phone';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
 
@@ -137,6 +156,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   label: "Password",
                   hint: "Enter your password",
                   obscureText: _obscurePassword,
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter a password';
+                    }
+                    if (value.trim().length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off : Icons.visibility,
@@ -155,13 +183,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     label: "Promo Code",
                     hint: "Enter your promo code",
                     keyboardType: TextInputType.text,
+                    validator: (value) {
+                      if (!_isCompany && (value == null || value.trim().isEmpty)) {
+                        return 'Please enter your promo code';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                 ],
 
                 const SizedBox(height: 20),
 
-                // Кнопка Register
+                // Register Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

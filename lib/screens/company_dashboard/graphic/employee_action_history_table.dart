@@ -16,8 +16,7 @@ class EmployeeActionHistoryTable extends StatelessWidget {
   }
 
   String _calculateDuration(Timestamp? start, Timestamp? end) {
-    if (start == null) return '-';
-    if (end == null) return '-';
+    if (start == null || end == null) return '-';
     try {
       final duration = end.toDate().difference(start.toDate());
       final hours = duration.inHours;
@@ -30,6 +29,8 @@ class EmployeeActionHistoryTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('employee_action_history')
@@ -42,7 +43,7 @@ class EmployeeActionHistoryTable extends StatelessWidget {
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
             child: Text(
-              'No action records found',
+              'No employee action records found',
               style: TextStyle(fontSize: 16),
             ),
           );
@@ -50,41 +51,55 @@ class EmployeeActionHistoryTable extends StatelessWidget {
 
         final docs = snapshot.data!.docs;
 
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columnSpacing: 14,
-            headingRowHeight: 34,
-            dataRowHeight: 30,
-            columns: const [
-              DataColumn(label: Text('Name', style: TextStyle(fontSize: 12))),
-              DataColumn(label: Text('Contact', style: TextStyle(fontSize: 12))),
-              DataColumn(label: Text('Action', style: TextStyle(fontSize: 12))),
-              DataColumn(label: Text('Start Time', style: TextStyle(fontSize: 12))),
-              DataColumn(label: Text('End Time', style: TextStyle(fontSize: 12))),
-              DataColumn(label: Text('Duration', style: TextStyle(fontSize: 12))),
-            ],
-            rows: docs.map((doc) {
-              final data = doc.data() as Map<String, dynamic>;
-              final start = data['datetimeStart'] as Timestamp?;
-              final end = data['datetimeEnd'] as Timestamp?;
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmallScreen = constraints.maxWidth < 600;
 
-              final startStr = _formatDateTime(start);
-              final endStr = _formatDateTime(end);
-              final duration = _calculateDuration(start, end);
+            return Column(
+              children: [
+                // Table header
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                  color: Colors.grey[300],
+                  child: Row(
+                    children: const [
+                      Expanded(flex: 2, child: Text('Name', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                      Expanded(flex: 2, child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                      Expanded(flex: 3, child: Text('Start Time', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                      Expanded(flex: 3, child: Text('End Time', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
+                    ],
+                  ),
+                ),
 
-              return DataRow(
-                cells: [
-                  DataCell(FittedBox(child: Text(data['name'] ?? '-', style: const TextStyle(fontSize: 12)))),
-                  DataCell(FittedBox(child: Text(data['contact'] ?? '-', style: const TextStyle(fontSize: 12)))),
-                  DataCell(FittedBox(child: Text(data['action'] ?? '-', style: const TextStyle(fontSize: 12)))),
-                  DataCell(FittedBox(child: Text(startStr, style: const TextStyle(fontSize: 12)))),
-                  DataCell(FittedBox(child: Text(endStr, style: const TextStyle(fontSize: 12)))),
-                  DataCell(FittedBox(child: Text(duration, style: const TextStyle(fontSize: 12)))),
-                ],
-              );
-            }).toList(),
-          ),
+                // Table rows
+                ...docs.map((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final start = data['datetimeStart'] as Timestamp?;
+                  final end = data['datetimeEnd'] as Timestamp?;
+
+                  final startStr = _formatDateTime(start);
+                  final endStr = _formatDateTime(end);
+                  final duration = _calculateDuration(start, end);
+
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 2, child: Text(data['name'] ?? '-', style: const TextStyle(fontSize: 12))),
+                        Expanded(flex: 2, child: Text(data['action'] ?? '-', style: const TextStyle(fontSize: 12))),
+                        Expanded(flex: 3, child: Text(startStr, style: const TextStyle(fontSize: 12))),
+                        Expanded(flex: 3, child: Text(endStr, style: const TextStyle(fontSize: 12))),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            );
+          },
         );
       },
     );

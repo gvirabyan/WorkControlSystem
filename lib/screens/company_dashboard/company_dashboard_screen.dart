@@ -3,7 +3,7 @@ import 'package:pot/screens/company_dashboard/profile/profile_items.dart';
 import 'package:pot/ui_elements/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'company_documents_page.dart';
+import 'document/company_documents_page.dart';
 import 'company_employees_page.dart';
 import 'graphic/graphics_screen.dart';
 
@@ -66,7 +66,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Employees'),
+          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Graphics'),
           BottomNavigationBarItem(icon: Icon(Icons.file_copy), label: 'Documents'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
