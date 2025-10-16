@@ -95,7 +95,9 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
       });
     }
-
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userId', docRef.id);
+    await prefs.setString('userType', type);
     return docRef.id;
   }
 

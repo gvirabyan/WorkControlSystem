@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:pot/screens/company_dashboard/graphic/vacation_schedule_table.dart';
 import 'package:pot/screens/company_dashboard/graphic/work_schedule_table.dart';
@@ -51,9 +52,11 @@ class EmployeeDataTable extends StatelessWidget {
   }
 }
 
-// New widget replacing GraphicsScreen and containing 3 tabs
+
 class ScheduleDashboardScreen extends StatefulWidget {
-  const ScheduleDashboardScreen({super.key});
+  final String companyId;
+
+  const ScheduleDashboardScreen({super.key, required this.companyId});
 
   @override
   State<ScheduleDashboardScreen> createState() => _ScheduleDashboardScreenState();
@@ -61,21 +64,29 @@ class ScheduleDashboardScreen extends StatefulWidget {
 
 class _ScheduleDashboardScreenState extends State<ScheduleDashboardScreen> {
   int _selectedIndex = 0;
+  String? _promoCode;
 
-  // Titles for AppBar
-  static const List<String> _pageTitles = [
-    'Work Schedule',
-    'Vacation Schedule',
-    'Break Schedule',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCompanyPromoCode();
+  }
 
-  // Page widgets using the table with different schedule types
-  late final List<Widget> _pages = <Widget>[
-    const WorkScheduleTable(), // реальная таблица
-    const VacationScheduleTable(),
-    const EmployeeActionHistoryTable(),
-  ];
-
+  Future<void> _loadCompanyPromoCode() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.companyId)
+          .get();
+      if (doc.exists) {
+        setState(() {
+          _promoCode = doc.data()?['promoCode'] as String?;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching promoCode: $e');
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -85,41 +96,51 @@ class _ScheduleDashboardScreenState extends State<ScheduleDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_promoCode == null) {
+      // Пока promoCode загружается
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final List<Widget> pages = [
+      WorkScheduleTable(companyPromoCode: _promoCode!),
+      VacationScheduleTable(companyPromoCode: _promoCode!),
+      EmployeeActionHistoryTable(promoCode: _promoCode!),
+    ];
+
+    const List<String> pageTitles = [
+      'Work Schedule',
+      'Vacation Schedule',
+      'Break Schedule',
+    ];
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_pageTitles[_selectedIndex]), // Dynamic title
+        title: Text(pageTitles[_selectedIndex]),
         backgroundColor: Colors.blueAccent,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      // Display the currently selected page/table
-      body: _pages[_selectedIndex],
-
-      // Bottom navigation buttons
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.access_time),
-            label: 'Work Schedule',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.beach_access),
-            label: 'Vacation Schedule',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.coffee),
-            label: 'Break Schedule',
-          ),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.access_time), label: 'Work Schedule'),
+          BottomNavigationBarItem(icon: Icon(Icons.beach_access), label: 'Vacation Schedule'),
+          BottomNavigationBarItem(icon: Icon(Icons.coffee), label: 'Break Schedule'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
         onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed, // Show all buttons
+        type: BottomNavigationBarType.fixed,
       ),
     );
   }
 }
+
+
+
 
 class PlaceholderTable {
   const PlaceholderTable({required String scheduleType});

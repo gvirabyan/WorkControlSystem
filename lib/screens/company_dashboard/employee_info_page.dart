@@ -44,11 +44,11 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
   }
 
   final _hiddenFields = ['type', 'createdAt', 'password', 'promoCode'];
-  final _readonlyFields = ['name', 'status', 'emailOrPhone', 'workedHours'];
+  final _readonlyFields = ['name', 'currentStatus', 'emailOrPhone', 'workedHours'];
 
   final _personalFields = ['emailOrPhone', 'contact'];
   final _workFields = [
-    'status',
+    'currentStatus',
     'position',
     'startDate',
     'endDate',

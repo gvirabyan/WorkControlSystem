@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pot/ui_elements/app_input_field.dart';
 import '../../../services/company_profile_service.dart';
 
@@ -14,6 +15,9 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final _formKey = GlobalKey<FormState>();
+
+  // Promo Code
+  final _promoCodeController = TextEditingController();
 
   // Company information
   final _officialCompanyNameController = TextEditingController();
@@ -47,15 +51,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final _service = CompanyProfileService();
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-    }
-  }
-
   @override
   void initState() {
     super.initState();
@@ -64,8 +59,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
+    _promoCodeController.dispose();
     _officialCompanyNameController.dispose();
-    _commercialNameController.dispose(); // ✅ добавлено
+    _commercialNameController.dispose();
     _registeredAddressController.dispose();
     _registrationNumberController.dispose();
     _vatNumberController.dispose();
@@ -83,8 +79,30 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _loadProfile() async {
+    setState(() => _isFetching = true);
+
+    // Получаем данные профиля компании
     final data = await _service.getCompanyProfile(widget.companyId);
+
+    // Получаем promo code из таблицы users
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.companyId)
+        .get();
+
+    if (userDoc.exists) {
+      _promoCodeController.text = userDoc.data()?['promoCode'] ?? '';
+    }
 
     if (data != null) {
       _officialCompanyNameController.text = data['officialCompanyName'] ?? '';
@@ -128,7 +146,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await _service.saveCompanyProfile(
       companyId: widget.companyId,
       officialCompanyName: _officialCompanyNameController.text.trim(),
-      commercialName: _commercialNameController.text.trim(), // ✅ добавлено
+      commercialName: _commercialNameController.text.trim(),
       registeredAddress: _registeredAddressController.text.trim(),
       registrationNumber: _registrationNumberController.text.trim(),
       vatNumber: _vatNumberController.text.trim(),
@@ -181,6 +199,9 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 30),
+
+
+
             Center(
               child: Column(
                 children: [
@@ -207,7 +228,15 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
-            // ✅ Official name
+
+            // ✅ Promo code сверху (только чтение)
+            AppInputField(
+              controller: _promoCodeController,
+              label: "Promo Code",
+              keyboardType: TextInputType.text,
+              enabled: false,
+            ),
+            const SizedBox(height: 20),
             AppInputField(
               controller: _officialCompanyNameController,
               label: "Official company name",
@@ -216,7 +245,7 @@ class _ProfilePageState extends State<ProfilePage> {
               value == null || value.isEmpty ? "Field required" : null,
             ),
 
-            // ✅ Commercial name (новое поле)
+            // ✅ Commercial name
             const SizedBox(height: 16),
             AppInputField(
               controller: _commercialNameController,

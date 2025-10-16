@@ -18,12 +18,14 @@ class _HomePageState extends State<HomePage> {
   int _totalSeconds = 0;
 
   final usersCollection = FirebaseFirestore.instance.collection('users');
-  final historyCollection = FirebaseFirestore.instance.collection('employee_action_history');
+  final historyCollection =
+  FirebaseFirestore.instance.collection('employee_action_history');
 
   DocumentReference? _currentActionDoc;
 
   String _name = '';
   String _contact = '';
+  String _promoCode = ''; // <-- добавлена переменная для промокода
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _name = data['name'] ?? '';
       _contact = data['emailOrPhone'] ?? '';
+      _promoCode = data['promoCode'] ?? ''; // <-- получаем промокод
     });
   }
 
@@ -93,12 +96,10 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _startAction(String action) async {
-    // Завершаем текущее действие
+  Future<void> _startAction(String action, {String? taskTitle}) async {
+    // Завершаем предыдущее действие, если было
     if (_currentActionDoc != null) {
-      await _currentActionDoc!.update({
-        'datetimeEnd': FieldValue.serverTimestamp(),
-      });
+      await _currentActionDoc!.update({'datetimeEnd': FieldValue.serverTimestamp()});
     }
 
     // Создаём новую запись в истории
@@ -107,24 +108,103 @@ class _HomePageState extends State<HomePage> {
       'name': _name,
       'contact': _contact,
       'action': action,
+      'task': taskTitle ?? '',
+      'promoCode': _promoCode, // <-- добавлен промокод
       'datetimeStart': FieldValue.serverTimestamp(),
       'datetimeEnd': null,
     });
 
     _currentActionDoc = newDoc;
 
-    // Обновляем статус в users
-    await usersCollection.doc(widget.userId).update({'currentStatus': action});
+    // Обновляем статус и текущую задачу в users
+    await usersCollection.doc(widget.userId).update({
+      'currentStatus': action,
+      if (taskTitle != null) 'task': taskTitle,
+    });
   }
 
   Future<void> _endAction() async {
     if (_currentActionDoc != null) {
-      await _currentActionDoc!.update({
-        'datetimeEnd': FieldValue.serverTimestamp(),
-      });
+      await _currentActionDoc!.update({'datetimeEnd': FieldValue.serverTimestamp()});
       _currentActionDoc = null;
     }
-    await usersCollection.doc(widget.userId).update({'currentStatus': 'Not Working'});
+    await usersCollection.doc(widget.userId).update({
+      'currentStatus': 'Not Working',
+      'task': null,
+    });
+  }
+
+  // 🟢 Диалог выбора задачи
+  Future<void> _showTaskSelectionDialog() async {
+    String? selectedTask;
+
+    final snapshot = await usersCollection
+        .doc(widget.userId)
+        .collection('tasks')
+        .get();
+
+    final taskTitles = snapshot.docs.map((doc) => doc['title'] as String).toList();
+
+    if (taskTitles.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No tasks available')),
+      );
+      return;
+    }
+
+    await showDialog<String>(
+      context: context,
+      builder: (context) {
+        String? tempSelectedTask = selectedTask;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Select Task'),
+              content: DropdownButton<String>(
+                isExpanded: true,
+                value: tempSelectedTask,
+                hint: const Text('Choose a task'),
+                items: taskTitles.map((title) {
+                  return DropdownMenuItem(
+                    value: title,
+                    child: Text(title),
+                  );
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    tempSelectedTask = value;
+                  });
+                },
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: tempSelectedTask == null
+                      ? null
+                      : () {
+                    Navigator.pop(context, tempSelectedTask);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    ).then((value) async {
+      if (value != null) {
+        _startTimer();
+        await _startAction('Working', taskTitle: value);
+        setState(() {
+          _isWorking = true;
+          _isOnBreak = false;
+        });
+      }
+    });
   }
 
   void _toggleWorkState() async {
@@ -137,12 +217,7 @@ class _HomePageState extends State<HomePage> {
         _isOnBreak = false;
       });
     } else {
-      _startTimer();
-      await _startAction('Working');
-      setState(() {
-        _isWorking = true;
-        _isOnBreak = false;
-      });
+      await _showTaskSelectionDialog(); // Показываем окно выбора задачи
     }
   }
 
@@ -166,7 +241,7 @@ class _HomePageState extends State<HomePage> {
     int hours = totalSeconds ~/ 3600;
     int minutes = (totalSeconds % 3600) ~/ 60;
     int seconds = totalSeconds % 60;
-    return '${hours.toString().padLeft(2,'0')}:${minutes.toString().padLeft(2,'0')}:${seconds.toString().padLeft(2,'0')}';
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -176,14 +251,20 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            _isWorking ? (_isOnBreak ? 'On Break' : 'Currently Working') : 'Not Working',
+            _isWorking
+                ? (_isOnBreak ? 'On Break' : 'Currently Working')
+                : 'Not Working',
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
           if (_isWorking)
             Text(
               _formatTime(_totalSeconds),
-              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.blue),
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
             ),
           const SizedBox(height: 30),
           if (!_isWorking)
@@ -192,7 +273,8 @@ class _HomePageState extends State<HomePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: const Text('Start Work'),
             )
@@ -205,7 +287,8 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   ),
                   child: const Text('Finish Work'),
                 ),
@@ -215,7 +298,8 @@ class _HomePageState extends State<HomePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   ),
                   child: const Text('Break'),
                 ),
@@ -227,7 +311,8 @@ class _HomePageState extends State<HomePage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
               child: const Text('Continue Work'),
             ),

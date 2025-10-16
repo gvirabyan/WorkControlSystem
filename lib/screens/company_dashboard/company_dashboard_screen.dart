@@ -33,7 +33,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
       _companyId = id;
       _pages = [
         if (_companyId != null) CompanyEmployeesPage(companyId: _companyId!),
-        const ScheduleDashboardScreen(), // !!! Обновлено для использования нового виджета
+        if (_companyId != null) ScheduleDashboardScreen(companyId: _companyId!),
         const CompanyDocumentsPage(),
         if (_companyId != null) ProfileItems(companyId: _companyId!),
       ];

@@ -3,7 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class VacationScheduleTable extends StatelessWidget {
-  const VacationScheduleTable({super.key});
+  final String companyPromoCode; // добавляем promoCode компании
+
+  const VacationScheduleTable({
+    super.key,
+    required this.companyPromoCode, // передаём в конструктор
+  });
 
   String _calculateDuration(String? startDate, String? endDate) {
     if (startDate == null || endDate == null || startDate.isEmpty || endDate.isEmpty) {
@@ -34,6 +39,7 @@ class VacationScheduleTable extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('vacations')
+          .where('promoCode', isEqualTo: companyPromoCode) // фильтруем по компании
           .orderBy('createdAt', descending: false)
           .snapshots(),
       builder: (context, snapshot) {

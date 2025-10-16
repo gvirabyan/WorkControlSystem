@@ -2,7 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WorkScheduleTable extends StatelessWidget {
-  const WorkScheduleTable({super.key});
+  final String companyPromoCode; // добавляем параметр
+
+  const WorkScheduleTable({
+    super.key,
+    required this.companyPromoCode, // передаём promoCode компании
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -10,6 +15,7 @@ class WorkScheduleTable extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('users')
           .where('type', isEqualTo: 'employee')
+          .where('promoCode', isEqualTo: companyPromoCode) // фильтр по компании
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -40,27 +46,30 @@ class WorkScheduleTable extends StatelessWidget {
                   4: FlexColumnWidth(3), // Task
                 },
                 children: [
-                  // Table header
                   _buildHeaderRow(),
-                  // Table rows
                   ...docs.map((doc) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final status = (data['status'] ?? '').toString().toLowerCase();
+                    final status = (data['currentStatus'] ?? '').toString();
 
-                    Color? bgColor;
-                    if (status.contains('working')) {
-                      bgColor = Colors.green.withOpacity(0.2);
-                    } else if (status.contains('break')) {
-                      bgColor = Colors.yellow.withOpacity(0.3);
-                    } else {
-                      bgColor = Colors.red.withOpacity(0.3);
+                    Color bgColor;
+                    switch (status) {
+                      case 'Working':
+                        bgColor = Colors.green.withOpacity(0.2);
+                        break;
+                      case 'On Break':
+                        bgColor = Colors.yellow.withOpacity(0.3);
+                        break;
+                      case 'Not Working':
+                      default:
+                        bgColor = Colors.red.withOpacity(0.3);
+                        break;
                     }
 
                     return _buildDataRow(
                       name: data['name'] ?? '',
                       start: data['startDate'] ?? '',
                       end: data['endDate'] ?? '',
-                      status: data['status'] ?? '',
+                      status: status,
                       task: data['task'] ?? '',
                       color: bgColor,
                       small: isSmallScreen,

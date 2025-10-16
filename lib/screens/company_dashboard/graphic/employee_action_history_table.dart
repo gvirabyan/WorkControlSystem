@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class EmployeeActionHistoryTable extends StatelessWidget {
-  const EmployeeActionHistoryTable({super.key});
+  final String promoCode; // <-- получаем промокод снаружи
+
+  const EmployeeActionHistoryTable({super.key, required this.promoCode});
 
   String _formatDateTime(Timestamp? timestamp) {
     if (timestamp == null) return '-';
@@ -34,6 +36,7 @@ class EmployeeActionHistoryTable extends StatelessWidget {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('employee_action_history')
+          .where('promoCode', isEqualTo: promoCode) // <-- фильтр по promoCode
           .orderBy('datetimeStart', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
