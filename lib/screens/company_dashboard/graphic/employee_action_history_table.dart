@@ -32,12 +32,12 @@ class EmployeeActionHistoryTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-
+    print(promoCode);
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('employee_action_history')
           .where('promoCode', isEqualTo: promoCode) // <-- фильтр по promoCode
-          .orderBy('datetimeStart', descending: true)
+         // .orderBy('datetimeStart', descending: true)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
