@@ -44,6 +44,7 @@ class _CompanyDocumentsPageState extends State<CompanyDocumentsPage> {
 
   Future<void> _addDocument(Document document) async {
     await _firestoreService.sendDocument(document);
+    setState(() {});
   }
 
   void _applyFilter(

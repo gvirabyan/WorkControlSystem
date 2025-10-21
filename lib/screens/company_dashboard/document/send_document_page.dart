@@ -229,20 +229,34 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               ElevatedButton(
                 onPressed: () async {
                   if (_formKey.currentState!.validate()) {
-                    for (final file in _selectedFiles) {
+                    if (_selectedFiles.isEmpty) {
                       final newDocument = Document(
                         id: '',
                         title: _titleController.text,
                         type: _selectedDocumentType!,
                         message: _messageController.text,
-                        files: [file.path],
+                        files: [],
                         senderId: widget.companyId,
-                        recipientIds:
-                        _selectedEmployees.map((e) => e.id).toList(),
+                        recipientIds: _selectedEmployees.map((e) => e.id).toList(),
                         date: DateTime.now(),
                       );
                       await widget.onSend(newDocument);
+                    } else {
+                      for (final file in _selectedFiles) {
+                        final newDocument = Document(
+                          id: '',
+                          title: _titleController.text,
+                          type: _selectedDocumentType!,
+                          message: _messageController.text,
+                          files: [file.path],
+                          senderId: widget.companyId,
+                          recipientIds: _selectedEmployees.map((e) => e.id).toList(),
+                          date: DateTime.now(),
+                        );
+                        await widget.onSend(newDocument);
+                      }
                     }
+
                     Navigator.of(context).pop();
                   }
                 },
