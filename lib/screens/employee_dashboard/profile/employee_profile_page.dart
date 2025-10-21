@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pot/ui_elements/task_card.dart';
 import 'package:pot/models/task_model.dart' as model;
 import '../request_vacation_page.dart';
+import 'employee_notes_page.dart';
 
 class EmployeeProfilePage extends StatefulWidget {
   final String userId;
@@ -164,6 +165,33 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EmployeeNotesPage(
+                            companyPromoCode: userData['promoCode'] ?? '',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.note_alt),
+                    label: const Text('Notes'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 30),
 
                 const Align(
