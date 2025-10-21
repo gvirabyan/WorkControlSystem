@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pot/services/firebase_messaging_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -124,6 +125,12 @@ class AuthService {
     await prefs.setString('userId', userId);
     await prefs.setString('userType', data['type']);
 
+    // Save FCM token
+    final FirebaseMessagingService firebaseMessagingService = FirebaseMessagingService();
+    final String? token = await firebaseMessagingService.getToken();
+    if (token != null) {
+      await users.doc(userId).update({'fcmToken': token});
+    }
 
     // Добавляем userId в возвращаемый Map
     return {

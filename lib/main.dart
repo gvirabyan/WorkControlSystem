@@ -8,16 +8,19 @@ import 'screens/welcome_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/employee_dashboard/employee_dashboard_screen.dart';
+import 'package:pot/services/firebase_messaging_service.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  // await Supabase.initialize(
-  //   url: 'https://vfeyzxfbyrdffnvabfms.supabase.co',
-  //   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZmZXl6eGZieXJkZmZudmFiZm1zIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk2ODU4OTUsImV4cCI6MjA3NTI2MTg5NX0.9c1aFHXS4QSQTcazpRYE80LxPGhCSNFkc6Tdcl1dfbo',        // вставь сюда anon public key
-  // );
+
+  final FirebaseMessagingService firebaseMessagingService = FirebaseMessagingService();
+  await firebaseMessagingService.initialize();
+  final String? token = await firebaseMessagingService.getToken();
+  print('Firebase Messaging Token: $token');
+
   runApp(const MyApp());
 }
 
