@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:pot/screens/employee_dashboard/profile/employee_profile_items.dart';
 import 'package:pot/screens/welcome_screen.dart';
 import 'package:pot/services/auth_service.dart';
 import 'package:pot/ui_elements/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // <-- НОВЫЙ ИМПОРТ ДЛЯ FIREBASE
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'documents_page.dart';
 import 'home_page.dart';
 import 'history_page.dart';
-import 'profile_page.dart';
 
 class EmployeeDashboard extends StatefulWidget {
   const EmployeeDashboard({super.key});
@@ -94,7 +94,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
         HomePage(userId: _userId!),
         HistoryPage(promoCode: _promoCode!), // <-- Передаем promoCode в HistoryPage
         DocumentsPage(),
-        ProfilePage(userId: _userId!, onLogout: _logout),
+        ProfileItems(companyId: _userId!),
       ];
       _isLoading = false; // Загрузка завершена
     });

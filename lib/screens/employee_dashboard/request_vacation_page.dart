@@ -41,11 +41,8 @@ class RequestVacationPage extends StatelessWidget {
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection('employeeVacation')
-        // Sorting to check the latest status
-            .orderBy('createdAt', descending: true)
+            .collection('vacations')
+            .where('userId', isEqualTo: userId)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -56,7 +53,22 @@ class RequestVacationPage extends StatelessWidget {
             return Center(child: Text('Error loading data: ${snapshot.error}')); // Translated
           }
 
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+            return const Center(child: Text('No vacation requests found.'));
+          }
+
           final vacations = snapshot.data!.docs;
+          // Sort manually to handle potential null values in 'createdAt'
+          vacations.sort((a, b) {
+            final aData = a.data();
+            final bData = b.data();
+            final aTimestamp = aData['createdAt'] as Timestamp?;
+            final bTimestamp = bData['createdAt'] as Timestamp?;
+            if (aTimestamp == null && bTimestamp == null) return 0;
+            if (aTimestamp == null) return 1; // a is greater (comes later)
+            if (bTimestamp == null) return -1; // b is greater
+            return bTimestamp.compareTo(aTimestamp); // For descending order
+          });
 
           // Check if there is an active or pending request
           final hasActiveOrPending = vacations.any(

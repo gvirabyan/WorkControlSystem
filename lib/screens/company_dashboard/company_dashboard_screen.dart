@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'package:pot/screens/company_dashboard/profile/profile_items.dart';
 import 'package:pot/ui_elements/custom_app_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'note/company_notes_page.dart';
 import 'document/company_documents_page.dart';
 import 'company_employees_page.dart';
 import 'graphic/graphics_screen.dart';
@@ -17,25 +19,37 @@ class CompanyDashboard extends StatefulWidget {
 class _CompanyDashboardState extends State<CompanyDashboard> {
   int _selectedIndex = 0;
   String? _companyId;
+  String? _promoCode;
   List<Widget> _pages = [];
 
   @override
   void initState() {
     super.initState();
-    _loadCompanyId();
+    _loadCompanyIdAndPromoCode();
   }
 
-  void _loadCompanyId() async {
+  Future<void> _loadCompanyIdAndPromoCode() async {
     final prefs = await SharedPreferences.getInstance();
     final id = prefs.getString('userId');
 
+    if (id == null) return;
+
+    // 🔹 Получаем promoCode из Firestore
+    final doc =
+    await FirebaseFirestore.instance.collection('users').doc(id).get();
+    final promo = doc.data()?['promoCode'] as String?;
+
     setState(() {
       _companyId = id;
+      _promoCode = promo;
+
       _pages = [
-        if (_companyId != null) CompanyEmployeesPage(companyId: _companyId!),
-        if (_companyId != null) ScheduleDashboardScreen(companyId: _companyId!),
+        CompanyEmployeesPage(companyId: _companyId!),
+        ScheduleDashboardScreen(companyId: _companyId!),
         const CompanyDocumentsPage(),
-        if (_companyId != null) ProfileItems(companyId: _companyId!),
+        if (_promoCode != null)
+          CompanyNotesPage(companyPromoCode: _promoCode!), // ✅ передаём promoCode
+        ProfileItems(companyId: _companyId!),
       ];
     });
   }
@@ -46,7 +60,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     });
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (_pages.isEmpty) {
@@ -56,19 +69,18 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     }
 
     return Scaffold(
-      appBar: CustomAppBar(
-        title: "Company Dashboard",
-
-      ),
+      appBar: CustomAppBar(title: "Company Dashboard"),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // чтобы все кнопки помещались
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Staff'),
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Graphics'),
           BottomNavigationBarItem(icon: Icon(Icons.file_copy), label: 'Documents'),
+          BottomNavigationBarItem(icon: Icon(Icons.note_alt), label: 'Notes'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,

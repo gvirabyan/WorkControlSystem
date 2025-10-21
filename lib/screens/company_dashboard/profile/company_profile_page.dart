@@ -21,7 +21,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   // Company information
   final _officialCompanyNameController = TextEditingController();
-  final _commercialNameController = TextEditingController(); // ✅ добавлено
+  final _commercialNameController = TextEditingController();
   final _registeredAddressController = TextEditingController();
   final _registrationNumberController = TextEditingController();
   final _vatNumberController = TextEditingController();
@@ -91,10 +91,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _loadProfile() async {
     setState(() => _isFetching = true);
 
-    // Получаем данные профиля компании
     final data = await _service.getCompanyProfile(widget.companyId);
 
-    // Получаем promo code из таблицы users
     final userDoc = await FirebaseFirestore.instance
         .collection('users')
         .doc(widget.companyId)
@@ -134,7 +132,19 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
+    // ✅ Разрешаем сохранять даже одно поле (валидация отключена)
+    // Только email проверяется, если он заполнен
+    if (_emailController.text.isNotEmpty &&
+        !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+            .hasMatch(_emailController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Invalid email format ❌"),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -199,9 +209,6 @@ class _ProfilePageState extends State<ProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 30),
-
-
-
             Center(
               child: Column(
                 children: [
@@ -224,92 +231,63 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text("Company Information",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const Text(
+              "Company Information",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
 
-
-            // ✅ Promo code сверху (только чтение)
+            // Promo code
             AppInputField(
               controller: _promoCodeController,
               label: "Promo Code",
-              keyboardType: TextInputType.text,
               enabled: false,
             ),
             const SizedBox(height: 20),
+
             AppInputField(
               controller: _officialCompanyNameController,
               label: "Official company name",
-              keyboardType: TextInputType.name,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
-
-            // ✅ Commercial name
             const SizedBox(height: 16),
             AppInputField(
               controller: _commercialNameController,
               label: "Commercial name",
-              keyboardType: TextInputType.name,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
-
             const SizedBox(height: 16),
             AppInputField(
               controller: _registeredAddressController,
               label: "Registered address",
-              keyboardType: TextInputType.streetAddress,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _registrationNumberController,
               label: "Registration number / RCS number",
-              keyboardType: TextInputType.text,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _vatNumberController,
               label: "VAT number",
-              keyboardType: TextInputType.text,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _sectorOfActivityController,
               label: "Sector of activity / NACE code",
-              keyboardType: TextInputType.text,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _phoneController,
               label: "Phone",
               keyboardType: TextInputType.phone,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _emailController,
               label: "Email",
               keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.isEmpty) return "Field required";
-                if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                    .hasMatch(value)) {
-                  return "Invalid email";
-                }
-                return null;
-              },
             ),
             const SizedBox(height: 16),
+
             CheckboxListTile(
               title: const Text("Social security number not applicable"),
               value: _socialSecurityNumberNotApplicable,
@@ -327,14 +305,10 @@ class _ProfilePageState extends State<ProfilePage> {
             AppInputField(
               controller: _socialSecurityNumberController,
               label: "Social security number",
-              keyboardType: TextInputType.text,
               enabled: !_socialSecurityNumberNotApplicable,
-              validator: (value) => !_socialSecurityNumberNotApplicable &&
-                  (value == null || value.isEmpty)
-                  ? "Field required"
-                  : null,
             ),
             const SizedBox(height: 16),
+
             CheckboxListTile(
               title: const Text("Website not applicable"),
               value: _websiteNotApplicable,
@@ -354,63 +328,45 @@ class _ProfilePageState extends State<ProfilePage> {
               label: "Website",
               keyboardType: TextInputType.url,
               enabled: !_websiteNotApplicable,
-              validator: (value) =>
-              !_websiteNotApplicable && (value == null || value.isEmpty)
-                  ? "Field required"
-                  : null,
             ),
             const SizedBox(height: 30),
-            const Text("Responsible Persons",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+            const Text(
+              "Responsible Persons",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _managerFirstNameController,
               label: "Manager's first name",
-              keyboardType: TextInputType.name,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _managerLastNameController,
               label: "Manager's last name",
-              keyboardType: TextInputType.name,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _managerPositionController,
               label: "Manager's position",
-              keyboardType: TextInputType.text,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _hrManagerFirstNameController,
               label: "HR manager's first name",
-              keyboardType: TextInputType.name,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _hrManagerLastNameController,
               label: "HR manager's last name",
-              keyboardType: TextInputType.name,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _technicalContactController,
               label: "Technical contact person",
-              keyboardType: TextInputType.text,
-              validator: (value) =>
-              value == null || value.isEmpty ? "Field required" : null,
             ),
             const SizedBox(height: 30),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(

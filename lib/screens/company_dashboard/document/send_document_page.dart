@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:pot/models/UserModel.dart';
@@ -43,15 +44,42 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
     _loadEmployees();
   }
 
+  Future<String?> _getCompanyPromoCode() async {
+    final doc = await FirebaseFirestore.instance.collection('users').doc(widget.companyId).get();
+    if (doc.exists) {
+      return doc.data()?['promoCode'] as String?;
+    }
+    return null;
+  }
+
   void _loadEmployees() async {
     setState(() {
       _isLoadingEmployees = true;
     });
-    _employees = await _firestoreService.getEmployees();
+
+    // 🔹 Получаем promoCode компании
+    final promoCode = await _getCompanyPromoCode();
+
+    if (promoCode != null) {
+      // 🔹 Загружаем сотрудников с promoCode и type == 'employee'
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .where('promoCode', isEqualTo: promoCode)
+          .where('type', isEqualTo: 'employee')
+          .get();
+
+      _employees = snapshot.docs
+          .map((doc) => UserModel.fromMap(doc.id, doc.data()))
+          .toList();
+    } else {
+      _employees = [];
+    }
+
     setState(() {
       _isLoadingEmployees = false;
     });
   }
+
 
   void _showEmployeeSelectionDialog() async {
     final List<UserModel>? result = await showDialog<List<UserModel>>(

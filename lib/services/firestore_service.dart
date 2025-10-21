@@ -4,13 +4,17 @@ import 'package:pot/models/document_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  Future<List<UserModel>> getEmployees(String promoCode) async {
+    final snapshot = await _db
+        .collection('users')
+        .where('promoCode', isEqualTo: promoCode) // фильтр по promoCode
+        .get();
 
-  Future<List<UserModel>> getEmployees() async {
-    final snapshot = await _db.collection('users').get();
     return snapshot.docs
         .map((doc) => UserModel.fromMap(doc.id, doc.data()))
         .toList();
   }
+
 
   Stream<List<Document>> getDocuments(String senderId) {
     return _db

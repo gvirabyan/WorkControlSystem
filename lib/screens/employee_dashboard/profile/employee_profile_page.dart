@@ -2,24 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pot/ui_elements/task_card.dart';
 import 'package:pot/models/task_model.dart' as model;
-// НОВЫЙ ИМПОРТ: Замените на путь к вашему файлу RequestVacationPage
-import 'request_vacation_page.dart';
+import '../request_vacation_page.dart';
 
-class ProfilePage extends StatefulWidget {
+class EmployeeProfilePage extends StatefulWidget {
   final String userId;
   final VoidCallback onLogout;
 
-  const ProfilePage({
+  const EmployeeProfilePage({
     super.key,
     required this.userId,
     required this.onLogout,
   });
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<EmployeeProfilePage> createState() => _EmployeeProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
   late Future<DocumentSnapshot<Map<String, dynamic>>> _userDataFuture;
 
   final _personalFields = ['emailOrPhone', 'contact'];
@@ -75,18 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF1976D2), Color(0xFF42A5F5)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
+
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: _userDataFuture,
         builder: (context, snapshot) {
@@ -220,24 +208,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 40),
 
-                // ---- Logout ----
-                Center(
-                  child: ElevatedButton.icon(
-                    onPressed: widget.onLogout,
-                    icon: const Icon(Icons.logout),
-                    label: const Text('Logout'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 30),
+
               ],
             ),
           );

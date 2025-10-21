@@ -24,7 +24,7 @@ class VacationPage extends StatelessWidget {
       case 'pending':
         return Colors.orange;
       case 'declined':
-      case 'prematurely_ended': // New status color
+      case 'prematurely_ended':
         return Colors.red;
       default:
         return Colors.grey;
@@ -36,16 +36,13 @@ class VacationPage extends StatelessWidget {
     final updateData = <String, dynamic>{'status': newStatus};
 
     if (newEndDate != null) {
-      // Update the end date to the new, earlier date
       updateData['endDate'] = Timestamp.fromDate(newEndDate);
-      updateData['prematurelyEnded'] = true; // Flag for clarity
+      updateData['prematurelyEnded'] = true;
     }
 
     try {
       await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userId)
-          .collection('employeeVacation')
+          .collection('vacations')
           .doc(docId)
           .update(updateData);
 
@@ -55,7 +52,6 @@ class VacationPage extends StatelessWidget {
         );
       }
     } catch (e) {
-      // In a real app, log the error and show a user-friendly message
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update status: $e')),
@@ -64,15 +60,11 @@ class VacationPage extends StatelessWidget {
     }
   }
 
-  // Dialog to handle setting an early return date
-  Future<void> _showEarlyReturnDialog(BuildContext context, String docId, DateTime currentStartDate, DateTime currentEndDate) {
+  // Dialog to handle early return
+  Future<void> _showEarlyReturnDialog(BuildContext context, String docId, DateTime currentStartDate, DateTime currentEndDate) async {
     DateTime? selectedDate = DateTime.now();
-    // Ensure the initial selected date is within bounds, defaulting to the earliest possible return date (start date)
-    if (selectedDate.isBefore(currentStartDate)) {
-      selectedDate = currentStartDate;
-    } else if (selectedDate.isAfter(currentEndDate)) {
-      selectedDate = currentEndDate;
-    }
+    if (selectedDate.isBefore(currentStartDate)) selectedDate = currentStartDate;
+    if (selectedDate.isAfter(currentEndDate)) selectedDate = currentEndDate;
 
     final TextEditingController dateController = TextEditingController(
       text: DateFormat('dd.MM.yyyy').format(selectedDate),
@@ -82,16 +74,12 @@ class VacationPage extends StatelessWidget {
       final DateTime? picked = await showDatePicker(
         context: context,
         initialDate: selectedDate ?? DateTime.now(),
-        // Cannot return before the start date
         firstDate: currentStartDate,
-        // Cannot return later than the original end date
         lastDate: currentEndDate,
       );
       if (picked != null) {
         selectedDate = picked;
         dateController.text = DateFormat('dd.MM.yyyy').format(picked);
-        // Force update of the dialog content state if possible (though Stateless, we rely on the dialog state)
-        // NOTE: This casting to Element is a workaround for StatelessWidget context rebuilds within a dialog.
         (context as Element).markNeedsBuild();
       }
     }
@@ -113,19 +101,17 @@ class VacationPage extends StatelessWidget {
                   labelText: 'Return Date',
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today),
-                    onPressed: () => pickDate(),
+                    onPressed: pickDate,
                   ),
                 ),
-                onTap: () => pickDate(),
+                onTap: pickDate,
               ),
             ],
           ),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
+              onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
               child: const Text('Confirm Early End'),
@@ -135,7 +121,7 @@ class VacationPage extends StatelessWidget {
                   _updateStatus(
                     context,
                     docId,
-                    'prematurely_ended', // New status for early termination
+                    'prematurely_ended',
                     newEndDate: selectedDate,
                   );
                 }
@@ -157,10 +143,9 @@ class VacationPage extends StatelessWidget {
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection('employeeVacation')
-            .orderBy('startDate', descending: true)
+            .collection('vacations')
+            .where('userId', isEqualTo: userId)
+            //.orderBy('startDate', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -215,7 +200,6 @@ class VacationPage extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              // Using formatted dates
                               'From $formattedStartDate to $formattedEndDate',
                               style: const TextStyle(
                                 fontSize: 16,
@@ -232,14 +216,12 @@ class VacationPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            // Displaying status, replacing underscore with space
                             'Status: ${status.replaceAll('_', ' ')[0].toUpperCase()}${status.replaceAll('_', ' ').substring(1)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: _getStatusColor(status),
                             ),
                           ),
-                          // Action Buttons
                           if (status == 'pending') ...[
                             ElevatedButton(
                               onPressed: () => _updateStatus(context, doc.id, 'approved'),
@@ -252,7 +234,6 @@ class VacationPage extends StatelessWidget {
                               child: const Text('Decline'),
                             ),
                           ] else if (status == 'vacation' || status == 'approved') ...[
-                            // Button to open the dialog for early return
                             ElevatedButton.icon(
                               onPressed: () => _showEarlyReturnDialog(context, doc.id, currentStartDate, currentEndDate),
                               icon: const Icon(Icons.logout),

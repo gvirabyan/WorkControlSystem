@@ -139,9 +139,3 @@ class _ScheduleDashboardScreenState extends State<ScheduleDashboardScreen> {
   }
 }
 
-
-
-
-class PlaceholderTable {
-  const PlaceholderTable({required String scheduleType});
-}

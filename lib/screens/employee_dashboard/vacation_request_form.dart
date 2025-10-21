@@ -119,9 +119,7 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
       try {
         // --- 1. Save to employee's subcollection for individual status tracking ---
         await FirebaseFirestore.instance
-            .collection('users')
-            .doc(widget.userId)
-            .collection('employeeVacation')
+            .collection('vacations')
             .add({
           'userId': widget.userId,
           'promoCode': _companyPromoCode!, // Use the fetched promo code

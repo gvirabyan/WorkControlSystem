@@ -1,86 +1,158 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class WorkScheduleTable extends StatelessWidget {
-  final String companyPromoCode; // добавляем параметр
+class WorkScheduleTable extends StatefulWidget {
+  final String companyPromoCode;
 
-  const WorkScheduleTable({
-    super.key,
-    required this.companyPromoCode, // передаём promoCode компании
-  });
+  const WorkScheduleTable({super.key, required this.companyPromoCode});
+
+  @override
+  State<WorkScheduleTable> createState() => _WorkScheduleTableState();
+}
+
+class _WorkScheduleTableState extends State<WorkScheduleTable> {
+  String nameFilter = '';
+  String taskFilter = '';
+  String statusFilter = '';
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('users')
-          .where('type', isEqualTo: 'employee')
-          .where('promoCode', isEqualTo: companyPromoCode) // фильтр по компании
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return const Center(
-            child: Text('No employees found', style: TextStyle(fontSize: 16)),
-          );
-        }
-
-        final docs = snapshot.data!.docs;
-
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final isSmallScreen = constraints.maxWidth < 600;
-
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Table(
-                border: TableBorder.all(color: Colors.grey.shade300),
-                columnWidths: const {
-                  0: FlexColumnWidth(2), // Name
-                  1: FlexColumnWidth(2), // Start
-                  2: FlexColumnWidth(2), // End
-                  3: FlexColumnWidth(2), // Status
-                  4: FlexColumnWidth(3), // Task
-                },
-                children: [
-                  _buildHeaderRow(),
-                  ...docs.map((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    final status = (data['currentStatus'] ?? '').toString();
-
-                    Color bgColor;
-                    switch (status) {
-                      case 'Working':
-                        bgColor = Colors.green.withOpacity(0.2);
-                        break;
-                      case 'On Break':
-                        bgColor = Colors.yellow.withOpacity(0.3);
-                        break;
-                      case 'Not Working':
-                      default:
-                        bgColor = Colors.red.withOpacity(0.3);
-                        break;
-                    }
-
-                    return _buildDataRow(
-                      name: data['name'] ?? '',
-                      start: data['startDate'] ?? '',
-                      end: data['endDate'] ?? '',
-                      status: status,
-                      task: data['task'] ?? '',
-                      color: bgColor,
-                      small: isSmallScreen,
-                    );
-                  }),
-                ],
+    return Column(
+      children: [
+        // Фильтры
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              SizedBox(
+                width: 150,
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: (val) => setState(() => nameFilter = val.toLowerCase()),
+                ),
               ),
-            );
-          },
-        );
-      },
+              SizedBox(
+                width: 150,
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Task',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  onChanged: (val) => setState(() => taskFilter = val.toLowerCase()),
+                ),
+              ),
+              SizedBox(
+                width: 150,
+                child: DropdownButtonFormField<String>(
+                  decoration: const InputDecoration(
+                    labelText: 'Status',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                  value: statusFilter.isEmpty ? null : statusFilter,
+                  items: ['Working', 'On Break', 'Not Working']
+                      .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                      .toList(),
+                  onChanged: (val) => setState(() => statusFilter = val ?? ''),
+                  isExpanded: true,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('users')
+                .where('type', isEqualTo: 'employee')
+                .where('promoCode', isEqualTo: widget.companyPromoCode)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(child: Text('No employees found'));
+              }
+
+              // Фильтруем локально по name, task и status
+              final docs = snapshot.data!.docs.where((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final name = (data['name'] ?? '').toString().toLowerCase();
+                final task = (data['task'] ?? '').toString().toLowerCase();
+                final status = (data['currentStatus'] ?? '').toString();
+
+                final matchesName = name.contains(nameFilter);
+                final matchesTask = task.contains(taskFilter);
+                final matchesStatus = statusFilter.isEmpty || status == statusFilter;
+
+                return matchesName && matchesTask && matchesStatus;
+              }).toList();
+
+              if (docs.isEmpty) {
+                return const Center(child: Text('No matching employees'));
+              }
+
+              return LayoutBuilder(
+                builder: (context, constraints) {
+                  final isSmallScreen = constraints.maxWidth < 600;
+
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Table(
+                      border: TableBorder.all(color: Colors.grey.shade300),
+                      columnWidths: const {
+                        0: FlexColumnWidth(2),
+                        1: FlexColumnWidth(2),
+                        2: FlexColumnWidth(2),
+                        3: FlexColumnWidth(2),
+                        4: FlexColumnWidth(3),
+                      },
+                      children: [
+                        _buildHeaderRow(),
+                        ...docs.map((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final status = (data['currentStatus'] ?? '').toString();
+
+                          Color bgColor;
+                          switch (status) {
+                            case 'Working':
+                              bgColor = Colors.green.withOpacity(0.2);
+                              break;
+                            case 'On Break':
+                              bgColor = Colors.yellow.withOpacity(0.3);
+                              break;
+                            default:
+                              bgColor = Colors.red.withOpacity(0.3);
+                          }
+
+                          return _buildDataRow(
+                            name: data['name'] ?? '',
+                            start: data['startDate'] ?? '',
+                            end: data['endDate'] ?? '',
+                            status: status,
+                            task: data['task'] ?? '',
+                            color: bgColor,
+                            small: isSmallScreen,
+                          );
+                        }),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
