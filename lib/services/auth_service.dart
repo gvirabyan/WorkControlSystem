@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pot/services/firebase_messaging_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class AuthService {
   final users = FirebaseFirestore.instance.collection('users');
@@ -130,6 +131,21 @@ class AuthService {
     final String? token = await firebaseMessagingService.getToken();
     if (token != null) {
       await users.doc(userId).update({'fcmToken': token});
+    }
+
+    // If the user is a company, send a notification to all employees
+    if (data['type'] == 'company') {
+      try {
+        final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('sendTestNotification');
+        final result = await callable.call(<String, dynamic>{
+          'promoCode': data['promoCode'],
+          'title': 'Company Login',
+          'body': '${data['name']} has logged in.',
+        });
+        print(result.data);
+      } catch (e) {
+        print(e);
+      }
     }
 
     // Добавляем userId в возвращаемый Map
