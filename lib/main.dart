@@ -1,15 +1,23 @@
-import 'package:pot/screens/company_dashboard/company_dashboard_screen.dart';
-import 'package:pot/screens/company_dashboard/graphic/employee_data_table.dart';
-import 'package:pot/screens/splash_screen.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
-import 'screens/employee_dashboard/employee_dashboard_screen.dart';
+import 'package:pot/screens/splash_screen.dart';
+import 'package:pot/screens/welcome_screen.dart';
+import 'package:pot/screens/login_screen.dart';
+import 'package:pot/screens/register_screen.dart';
+import 'package:pot/screens/company_dashboard/company_dashboard_screen.dart';
+import 'package:pot/screens/employee_dashboard/employee_dashboard_screen.dart';
+import 'package:pot/screens/company_dashboard/graphic/employee_data_table.dart';
 import 'package:pot/services/firebase_messaging_service.dart';
 
+/// Обработчик background уведомлений (должен быть top-level!)
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  debugPrint('Background message: ${message.notification?.title}');
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,17 +27,29 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Регистрация background handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // App Check защита
+  await FirebaseAppCheck.instance.activate(
+    webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
+    androidProvider:
+    kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    appleProvider: AppleProvider.appAttest,
+  );
+
   // Инициализация Firebase Messaging
-  // final FirebaseMessagingService firebaseMessagingService = FirebaseMessagingService();
-  // await firebaseMessagingService.initialize();
-  //
-  // // Получение токена устройства
-  // final String? token = await firebaseMessagingService.getToken();
-  // print('Firebase Messaging Token: $token');
+  final firebaseMessagingService = FirebaseMessagingService();
+  await firebaseMessagingService.initialize();
+
+  // Получение токена
+  final String? token = await firebaseMessagingService.getToken();
+  debugPrint('🔥 Firebase Messaging Token: $token');
+
+
 
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -43,10 +63,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.white,
       ),
-
       initialRoute: '/',
-
-      // ✅ маршруты
       routes: {
         '/': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomeScreen(),
@@ -55,8 +72,6 @@ class MyApp extends StatelessWidget {
         '/company': (context) => const CompanyDashboard(),
         '/employee': (context) => const EmployeeDashboard(),
         '/graphics': (context) => const GraphicsScreen(),
-
-
       },
     );
   }

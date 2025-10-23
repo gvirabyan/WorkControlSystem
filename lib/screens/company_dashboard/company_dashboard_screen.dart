@@ -61,21 +61,6 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
     });
   }
 
-  Future<void> _sendTestNotification() async {
-    if (_promoCode == null) return;
-
-    try {
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('sendTestNotification');
-      final result = await callable.call(<String, dynamic>{
-        'promoCode': _promoCode,
-      });
-      print(result.data);
-    } on FirebaseFunctionsException catch (e) {
-      print('Caught firebase functions exception: ${e.code} ${e.message}');
-    } catch (e) {
-      print('Caught exception: $e');
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,12 +89,7 @@ class _CompanyDashboardState extends State<CompanyDashboard> {
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.cyan,
         onTap: _onItemTapped,
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _sendTestNotification,
-        tooltip: 'Send Test Notification',
-        child: const Icon(Icons.send),
-      ),
+      )
     );
   }
 }
