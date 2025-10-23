@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pot/ui_elements/task_card.dart';
 import 'package:pot/models/task_model.dart' as model;
+import '../../all_tasks_page.dart';
+import '../../company_dashboard/DailyReportPage.dart';
+import '../../company_dashboard/WeeklyHistoryPage.dart';
 import '../request_vacation_page.dart';
 import 'employee_notes_page.dart';
 
@@ -117,36 +120,66 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
 
                 const SizedBox(height: 24),
                 // ---- Личные данные ----
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('👤 Personal Information',
-                      style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ExpansionTile(
+                  title: const Text(
+                    '👤 Personal Information',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  initiallyExpanded: false, // по умолчанию свернуто
+                  children:
+                  _personalFields
+                      .where((f) => userData.containsKey(f))
+                      .map(
+                        (f) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: _buildField(f, userData[f].toString()),
+                    ),
+                  )
+                      .toList(),
                 ),
-                const SizedBox(height: 12),
-                ..._personalFields
-                    .where((f) => userData.containsKey(f))
-                    .map((f) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: _buildField(f, userData[f].toString()),
-                )),
 
                 const SizedBox(height: 30),
                 // ---- Рабочие данные ----
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('💼 Work Information',
-                      style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ExpansionTile(
+                  title: const Text(
+                    '💼 Work Information',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  initiallyExpanded: false, // по умолчанию свернуто
+                  children:
+                  _workFields.map((f) {
+                    if (f == 'workSchedule') {
+                      final scheduleText =
+                      (userData[f]?.toString().isNotEmpty ?? false)
+                          ? userData[f].toString()
+                          : '';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _buildField(
+                          f,
+                          scheduleText,
+                          //hintText: 'Mon-Fri 09:00-18:00',
+                        ),
+                      );
+                    } else if (f == 'salary') {
+                      final salaryText =
+                      (userData[f]?.toString().isNotEmpty ?? false)
+                          ? userData[f].toString()
+                          : '0';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _buildField(f, salaryText),
+                      );
+                    } else if (userData.containsKey(f)) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _buildField(f, userData[f].toString()),
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  }).toList(),
                 ),
-                const SizedBox(height: 12),
-
-                ..._workFields
-                    .where((f) => userData.containsKey(f))
-                    .map((f) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: _buildField(f, userData[f].toString()),
-                )),
 
                 const SizedBox(height: 30),
                 Padding(
@@ -194,46 +227,67 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
 
                 const SizedBox(height: 30),
 
-                const Align(
-                  alignment: Alignment.center,
-                  child: Text(
-                    '🗂 My Tasks',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+               ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AllTasksPage(userId: widget.userId),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      '🗂 Tasks',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(widget.userId)
-                      .collection('tasks')
-                      .orderBy('startDate', descending: true)
-                      .limit(3)
-                      .snapshots(),
-                  builder: (context, taskSnapshot) {
-                    if (!taskSnapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
+                const SizedBox(height: 20),
 
-                    final tasks = taskSnapshot.data!.docs
-                        .map((doc) => model.Task.fromMap(doc.id, doc.data()))
-                        .toList();
-
-                    if (tasks.isEmpty) {
-                      return const Text('No tasks available.');
-                    }
-
-                    return Column(
-                      children: tasks
-                          .map((task) => Padding(
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 8.0),
-                        child: TaskCard(task: task),
-                      ))
-                          .toList(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => WeeklyHistoryPage(userId: widget.userId),
+                      ),
                     );
                   },
+                  icon: const Icon(Icons.calendar_month, color: Colors.white),
+                  label: const Text('History of last week', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
+                const SizedBox(height: 20),
+
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => DailyReportPage(userId: widget.userId),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.calendar_month, color: Colors.white),
+                  label: const Text('Daily Report', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+
+
                 const SizedBox(height: 40),
 
 

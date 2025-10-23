@@ -25,7 +25,10 @@ class _HomePageState extends State<HomePage> {
 
   String _name = '';
   String _contact = '';
-  String _promoCode = ''; // <-- добавлена переменная для промокода
+  String _promoCode = '';
+
+  final TextEditingController _taskDescriptionController = TextEditingController();
+  final TextEditingController _breakReasonController = TextEditingController();
 
   @override
   void initState() {
@@ -37,6 +40,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _timer?.cancel();
+    _taskDescriptionController.dispose();
+    _breakReasonController.dispose();
     super.dispose();
   }
 
@@ -48,7 +53,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _name = data['name'] ?? '';
       _contact = data['emailOrPhone'] ?? '';
-      _promoCode = data['promoCode'] ?? ''; // <-- получаем промокод
+      _promoCode = data['promoCode'] ?? '';
     });
   }
 
@@ -75,6 +80,8 @@ class _HomePageState extends State<HomePage> {
 
     if (query.docs.isNotEmpty) {
       _currentActionDoc = query.docs.first.reference;
+      final desc = query.docs.first.data()['description'] ?? '';
+      _taskDescriptionController.text = desc;
     }
   }
 
@@ -109,7 +116,8 @@ class _HomePageState extends State<HomePage> {
       'contact': _contact,
       'action': action,
       'task': taskTitle ?? '',
-      'promoCode': _promoCode, // <-- добавлен промокод
+      'promoCode': _promoCode,
+      'description': _taskDescriptionController.text,
       'datetimeStart': FieldValue.serverTimestamp(),
       'datetimeEnd': null,
     });
@@ -134,7 +142,16 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  // 🟢 Диалог выбора задачи
+  Future<void> _saveTaskDescription() async {
+    if (_currentActionDoc != null) {
+      await _currentActionDoc!.update({
+        'description': _taskDescriptionController.text,
+      });
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Description saved')));
+    }
+  }
+
   Future<void> _showTaskSelectionDialog() async {
     String? selectedTask;
 
@@ -197,6 +214,7 @@ class _HomePageState extends State<HomePage> {
       },
     ).then((value) async {
       if (value != null) {
+        _taskDescriptionController.clear();
         _startTimer();
         await _startAction('Working', taskTitle: value);
         setState(() {
@@ -215,9 +233,10 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _isWorking = false;
         _isOnBreak = false;
+        _taskDescriptionController.clear();
       });
     } else {
-      await _showTaskSelectionDialog(); // Показываем окно выбора задачи
+      await _showTaskSelectionDialog();
     }
   }
 
@@ -229,6 +248,44 @@ class _HomePageState extends State<HomePage> {
         _isOnBreak = false;
       });
     } else {
+      await _takeBreak();
+    }
+  }
+
+  Future<void> _takeBreak() async {
+    String? reason = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        _breakReasonController.clear();
+        return AlertDialog(
+          title: const Text('Break Reason'),
+          content: TextField(
+            controller: _breakReasonController,
+            decoration: const InputDecoration(hintText: 'Enter reason for break'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_breakReasonController.text.isEmpty) return;
+                Navigator.pop(context, _breakReasonController.text);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (reason != null && reason.isNotEmpty) {
+      if (_currentActionDoc != null) {
+        await _currentActionDoc!.update({
+          'breakReason': reason,
+        });
+      }
       _pauseTimer();
       await _startAction('On Break');
       setState(() {
@@ -247,76 +304,99 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            _isWorking
-                ? (_isOnBreak ? 'On Break' : 'Currently Working')
-                : 'Not Working',
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 10),
-          if (_isWorking)
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
             Text(
-              _formatTime(_totalSeconds),
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
+              _isWorking
+                  ? (_isOnBreak ? 'On Break' : 'Currently Working')
+                  : 'Not Working',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-          const SizedBox(height: 30),
-          if (!_isWorking)
-            ElevatedButton(
-              onPressed: _toggleWorkState,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-              ),
-              child: const Text('Start Work'),
-            )
-          else if (_isWorking && !_isOnBreak)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  onPressed: _toggleWorkState,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                  child: const Text('Finish Work'),
+            const SizedBox(height: 10),
+            if (_isWorking)
+              Text(
+                _formatTime(_totalSeconds),
+                style: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
                 ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _toggleBreakState,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                  child: const Text('Break'),
-                ),
-              ],
-            )
-          else
-            ElevatedButton(
-              onPressed: _toggleBreakState,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
               ),
-              child: const Text('Continue Work'),
-            ),
-        ],
+            const SizedBox(height: 20),
+
+            // Поле для описания задачи
+            if (_isWorking)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _taskDescriptionController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        labelText: 'Task Description / Notes',
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: _saveTaskDescription,
+                      child: const Text('Save Description'),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+
+            if (!_isWorking)
+              ElevatedButton(
+                onPressed: _toggleWorkState,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                child: const Text('Start Work'),
+              )
+            else if (_isWorking && !_isOnBreak)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: _toggleWorkState,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    ),
+                    child: const Text('Finish Work'),
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton(
+                    onPressed: _toggleBreakState,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    ),
+                    child: const Text('Break'),
+                  ),
+                ],
+              )
+            else
+              ElevatedButton(
+                onPressed: _toggleBreakState,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                ),
+                child: const Text('Continue Work'),
+              ),
+          ],
+        ),
       ),
     );
   }

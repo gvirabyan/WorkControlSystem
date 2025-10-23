@@ -10,19 +10,26 @@ import 'screens/register_screen.dart';
 import 'screens/employee_dashboard/employee_dashboard_screen.dart';
 import 'package:pot/services/firebase_messaging_service.dart';
 
-void main() async{
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Инициализация Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  final FirebaseMessagingService firebaseMessagingService = FirebaseMessagingService();
-  await firebaseMessagingService.initialize();
-  final String? token = await firebaseMessagingService.getToken();
-  print('Firebase Messaging Token: $token');
+  // Инициализация Firebase Messaging
+  // final FirebaseMessagingService firebaseMessagingService = FirebaseMessagingService();
+  // await firebaseMessagingService.initialize();
+  //
+  // // Получение токена устройства
+  // final String? token = await firebaseMessagingService.getToken();
+  // print('Firebase Messaging Token: $token');
 
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
