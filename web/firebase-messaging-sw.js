@@ -3,11 +3,11 @@ importScripts("https://www.gstatic.com/firebasejs/9.2.0/firebase-messaging-compa
 
 const firebaseConfig = {
     apiKey: "AIzaSyCamdUfFKi-lRpH4iJ9rOufA7hrUujEDDk",
-    authDomain: "pot-proj.firebaseapp.com",
-    projectId: "pot-proj",
-    storageBucket: "pot-proj.appspot.com",
+    appId: "1:149923852085:web:32002177b88da8ab7ea67c",
     messagingSenderId: "149923852085",
-    appId: "1:149923852085:web:32002177b88da8ab7ea67c"
+    projectId: "pot-proj",
+    authDomain: "pot-proj.firebaseapp.com",
+    storageBucket: "pot-proj.appspot.com"
 };
 
 firebase.initializeApp(firebaseConfig);

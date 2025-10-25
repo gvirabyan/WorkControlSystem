@@ -31,12 +31,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
   // App Check защита
-  await FirebaseAppCheck.instance.activate(
-    webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
-    androidProvider:
-    kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-    appleProvider: AppleProvider.appAttest,
-  );
+
 
   // Инициализация Firebase Messaging
   final firebaseMessagingService = FirebaseMessagingService();
