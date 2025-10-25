@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 import '../ui_elements/app_input_field.dart';
 
@@ -82,9 +83,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "New Account",
-          style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+        title: Text(
+          AppLocalizations.of(context)!.translate('new_account'),
+          style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -105,7 +106,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(_isCompany ? "Register as Company" : "Register as Employee"),
+                    Text(_isCompany
+                        ? AppLocalizations.of(context)!
+                            .translate('register_as_company')
+                        : AppLocalizations.of(context)!
+                            .translate('register_as_employee')),
                     Switch(
                       value: _isCompany,
                       onChanged: (bool value) {
@@ -119,8 +124,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Full Name
                 AppInputField(
                   controller: _nameController,
-                  label: "Full Name",
-                  hint: "Enter your name and surname",
+                  label: AppLocalizations.of(context)!.translate('full_name'),
+                  hint: AppLocalizations.of(context)!
+                      .translate('enter_your_name_and_surname'),
                   keyboardType: TextInputType.name,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -138,8 +144,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Email OR Phone
                 AppInputField(
                   controller: _emailOrPhoneController,
-                  label: "Email or Phone",
-                  hint: "Enter your email or phone number",
+                  label:
+                      AppLocalizations.of(context)!.translate('email_or_phone'),
+                  hint: AppLocalizations.of(context)!
+                      .translate('enter_your_email_or_phone_number'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -153,8 +161,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Password
                 AppInputField(
                   controller: _passwordController,
-                  label: "Password",
-                  hint: "Enter your password",
+                  label: AppLocalizations.of(context)!.translate('password'),
+                  hint: AppLocalizations.of(context)!
+                      .translate('enter_your_password'),
                   obscureText: _obscurePassword,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -167,7 +176,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       color: Colors.grey,
                     ),
                     onPressed: () =>
@@ -180,11 +191,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 if (!_isCompany) ...[
                   AppInputField(
                     controller: _promoCodeController,
-                    label: "Promo Code",
-                    hint: "Enter your promo code",
+                    label:
+                        AppLocalizations.of(context)!.translate('promo_code'),
+                    hint: AppLocalizations.of(context)!
+                        .translate('enter_your_promo_code'),
                     keyboardType: TextInputType.text,
                     validator: (value) {
-                      if (!_isCompany && (value == null || value.trim().isEmpty)) {
+                      if (!_isCompany &&
+                          (value == null || value.trim().isEmpty)) {
                         return 'Please enter your promo code';
                       }
                       return null;
@@ -210,14 +224,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 3,
-                      ),
-                    )
-                        : const Text("Sign Up"),
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
+                            ),
+                          )
+                        : Text(
+                            AppLocalizations.of(context)!.translate('signup')),
                   ),
                 ),
 
@@ -225,10 +240,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text("Already have an account? "),
+                    Text(AppLocalizations.of(context)!
+                        .translate('already_have_an_account')),
                     GestureDetector(
                       onTap: () => Navigator.pushNamed(context, '/login'),
-                      child: const Text("Log in", style: TextStyle(color: Colors.blue)),
+                      child: Text(
+                          AppLocalizations.of(context)!.translate('login'),
+                          style: const TextStyle(color: Colors.blue)),
                     ),
                   ],
                 ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:pot/models/UserModel.dart';
 import 'package:pot/models/document_model.dart';
 import 'package:pot/services/firestore_service.dart';
@@ -45,7 +46,10 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
   }
 
   Future<String?> _getCompanyPromoCode() async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(widget.companyId).get();
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.companyId)
+        .get();
     if (doc.exists) {
       return doc.data()?['promoCode'] as String?;
     }
@@ -80,7 +84,6 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
     });
   }
 
-
   void _showEmployeeSelectionDialog() async {
     final List<UserModel>? result = await showDialog<List<UserModel>>(
       context: context,
@@ -89,47 +92,49 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Select Employees'),
+              title: Text(
+                  AppLocalizations.of(context)!.translate('select_employees')),
               content: SizedBox(
                 width: double.maxFinite,
                 child: _isLoadingEmployees
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _employees.length,
-                  itemBuilder: (context, index) {
-                    final employee = _employees[index];
-                    final isSelected = tempSelectedEmployees
-                        .any((e) => e.id == employee.id);
-                    return CheckboxListTile(
-                      title: Text(employee.name),
-                      value: isSelected,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value!) {
-                            tempSelectedEmployees.add(employee);
-                          } else {
-                            tempSelectedEmployees
-                                .removeWhere((e) => e.id == employee.id);
-                          }
-                        });
-                      },
-                    );
-                  },
-                ),
+                        shrinkWrap: true,
+                        itemCount: _employees.length,
+                        itemBuilder: (context, index) {
+                          final employee = _employees[index];
+                          final isSelected = tempSelectedEmployees
+                              .any((e) => e.id == employee.id);
+                          return CheckboxListTile(
+                            title: Text(employee.name),
+                            value: isSelected,
+                            onChanged: (value) {
+                              setState(() {
+                                if (value!) {
+                                  tempSelectedEmployees.add(employee);
+                                } else {
+                                  tempSelectedEmployees
+                                      .removeWhere((e) => e.id == employee.id);
+                                }
+                              });
+                            },
+                          );
+                        },
+                      ),
               ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
-                  child: const Text('Cancel'),
+                  child:
+                      Text(AppLocalizations.of(context)!.translate('cancel')),
                 ),
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(tempSelectedEmployees);
                   },
-                  child: const Text('Done'),
+                  child: Text(AppLocalizations.of(context)!.translate('done')),
                 ),
               ],
             );
@@ -158,7 +163,7 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Send Document'),
+        title: Text(AppLocalizations.of(context)!.translate('send_document')),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -168,7 +173,8 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
             children: [
               ElevatedButton(
                 onPressed: _showEmployeeSelectionDialog,
-                child: const Text('Select Employees'),
+                child: Text(
+                    AppLocalizations.of(context)!.translate('select_employees')),
               ),
               Wrap(
                 children: _selectedEmployees
@@ -178,10 +184,11 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               const SizedBox(height: 16),
               AppInputField(
                 controller: _titleController,
-                label: 'Title',
+                label: AppLocalizations.of(context)!.translate('title'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a title';
+                    return AppLocalizations.of(context)!
+                        .translate('please_enter_a_title');
                   }
                   return null;
                 },
@@ -189,7 +196,7 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               const SizedBox(height: 16),
               AppDropdownFormField(
                 value: _selectedDocumentType,
-                label: 'Document Type',
+                label: AppLocalizations.of(context)!.translate('document_type'),
                 items: _documentTypes,
                 onChanged: (newValue) {
                   setState(() {
@@ -198,7 +205,8 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                 },
                 validator: (value) {
                   if (value == null) {
-                    return 'Please select a document type';
+                    return AppLocalizations.of(context)!
+                        .translate('please_select_a_document_type');
                   }
                   return null;
                 },
@@ -206,11 +214,12 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               const SizedBox(height: 16),
               AppInputField(
                 controller: _messageController,
-                label: 'Message',
+                label: AppLocalizations.of(context)!.translate('message'),
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a message';
+                    return AppLocalizations.of(context)!
+                        .translate('please_enter_a_message');
                   }
                   return null;
                 },
@@ -218,7 +227,8 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _pickFiles,
-                child: const Text('Attach Files'),
+                child:
+                    Text(AppLocalizations.of(context)!.translate('attach_files')),
               ),
               Wrap(
                 children: _selectedFiles
@@ -237,7 +247,8 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                         message: _messageController.text,
                         files: [],
                         senderId: widget.companyId,
-                        recipientIds: _selectedEmployees.map((e) => e.id).toList(),
+                        recipientIds:
+                            _selectedEmployees.map((e) => e.id).toList(),
                         date: DateTime.now(),
                       );
                       await widget.onSend(newDocument);
@@ -250,7 +261,8 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                           message: _messageController.text,
                           files: [file.path],
                           senderId: widget.companyId,
-                          recipientIds: _selectedEmployees.map((e) => e.id).toList(),
+                          recipientIds:
+                              _selectedEmployees.map((e) => e.id).toList(),
                           date: DateTime.now(),
                         );
                         await widget.onSend(newDocument);
@@ -260,7 +272,7 @@ class _SendDocumentPageState extends State<SendDocumentPage> {
                     Navigator.of(context).pop();
                   }
                 },
-                child: const Text('Send'),
+                child: Text(AppLocalizations.of(context)!.translate('send')),
               ),
             ],
           ),

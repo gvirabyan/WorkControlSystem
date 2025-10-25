@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:pot/ui_elements/app_input_field.dart';
 import '../../../services/company_profile_service.dart';
 
@@ -108,7 +109,8 @@ class _ProfilePageState extends State<ProfilePage> {
       _registeredAddressController.text = data['registeredAddress'] ?? '';
       _registrationNumberController.text = data['registrationNumber'] ?? '';
       _vatNumberController.text = data['vatNumber'] ?? '';
-      _socialSecurityNumberController.text = data['socialSecurityNumber'] ?? '';
+      _socialSecurityNumberController.text =
+          data['socialSecurityNumber'] ?? '';
       _sectorOfActivityController.text = data['sectorOfActivity'] ?? '';
       _phoneController.text = data['phone'] ?? '';
       _emailController.text = data['email'] ?? '';
@@ -138,9 +140,10 @@ class _ProfilePageState extends State<ProfilePage> {
         !RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
             .hasMatch(_emailController.text)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Invalid email format ❌"),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(
+              AppLocalizations.of(context)!.translate('invalid_email_format')),
+          duration: const Duration(seconds: 2),
         ),
       );
       return;
@@ -181,9 +184,9 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() => _isLoading = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Profile saved ✅"),
-        duration: Duration(seconds: 2),
+      SnackBar(
+        content: Text(AppLocalizations.of(context)!.translate('profile_saved')),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -217,79 +220,86 @@ class _ProfilePageState extends State<ProfilePage> {
                     backgroundImage: _image != null
                         ? FileImage(_image!)
                         : _avatarUrl != null
-                        ? NetworkImage(_avatarUrl!)
-                        : null,
+                            ? NetworkImage(_avatarUrl!)
+                            : null,
                     child: _image == null && _avatarUrl == null
                         ? const Icon(Icons.business, size: 50)
                         : null,
                   ),
                   TextButton(
                     onPressed: _pickImage,
-                    child: const Text("Change avatar"),
+                    child: Text(
+                        AppLocalizations.of(context)!.translate('change_avatar')),
                   )
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              "Company Information",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.translate('company_information'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
             // Promo code
             AppInputField(
               controller: _promoCodeController,
-              label: "Promo Code",
+              label: AppLocalizations.of(context)!.translate('promo_code'),
               enabled: false,
             ),
             const SizedBox(height: 20),
 
             AppInputField(
               controller: _officialCompanyNameController,
-              label: "Official company name",
+              label: AppLocalizations.of(context)!
+                  .translate('official_company_name'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _commercialNameController,
-              label: "Commercial name",
+              label:
+                  AppLocalizations.of(context)!.translate('commercial_name'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _registeredAddressController,
-              label: "Registered address",
+              label:
+                  AppLocalizations.of(context)!.translate('registered_address'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _registrationNumberController,
-              label: "Registration number / RCS number",
+              label: AppLocalizations.of(context)!
+                  .translate('registration_number_rcs_number'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _vatNumberController,
-              label: "VAT number",
+              label: AppLocalizations.of(context)!.translate('vat_number'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _sectorOfActivityController,
-              label: "Sector of activity / NACE code",
+              label: AppLocalizations.of(context)!
+                  .translate('sector_of_activity_nace_code'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _phoneController,
-              label: "Phone",
+              label: AppLocalizations.of(context)!.translate('phone'),
               keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _emailController,
-              label: "Email",
+              label: AppLocalizations.of(context)!.translate('email'),
               keyboardType: TextInputType.emailAddress,
             ),
             const SizedBox(height: 16),
 
             CheckboxListTile(
-              title: const Text("Social security number not applicable"),
+              title: Text(AppLocalizations.of(context)!
+                  .translate('social_security_number_not_applicable')),
               value: _socialSecurityNumberNotApplicable,
               onChanged: (value) {
                 setState(() {
@@ -304,13 +314,15 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             AppInputField(
               controller: _socialSecurityNumberController,
-              label: "Social security number",
+              label: AppLocalizations.of(context)!
+                  .translate('social_security_number'),
               enabled: !_socialSecurityNumberNotApplicable,
             ),
             const SizedBox(height: 16),
 
             CheckboxListTile(
-              title: const Text("Website not applicable"),
+              title: Text(AppLocalizations.of(context)!
+                  .translate('website_not_applicable')),
               value: _websiteNotApplicable,
               onChanged: (value) {
                 setState(() {
@@ -325,45 +337,51 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             AppInputField(
               controller: _websiteController,
-              label: "Website",
+              label: AppLocalizations.of(context)!.translate('website'),
               keyboardType: TextInputType.url,
               enabled: !_websiteNotApplicable,
             ),
             const SizedBox(height: 30),
 
-            const Text(
-              "Responsible Persons",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              AppLocalizations.of(context)!.translate('responsible_persons'),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _managerFirstNameController,
-              label: "Manager's first name",
+              label: AppLocalizations.of(context)!
+                  .translate('managers_first_name'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _managerLastNameController,
-              label: "Manager's last name",
+              label:
+                  AppLocalizations.of(context)!.translate('managers_last_name'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _managerPositionController,
-              label: "Manager's position",
+              label:
+                  AppLocalizations.of(context)!.translate('managers_position'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _hrManagerFirstNameController,
-              label: "HR manager's first name",
+              label: AppLocalizations.of(context)!
+                  .translate('hr_managers_first_name'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _hrManagerLastNameController,
-              label: "HR manager's last name",
+              label: AppLocalizations.of(context)!
+                  .translate('hr_managers_last_name'),
             ),
             const SizedBox(height: 16),
             AppInputField(
               controller: _technicalContactController,
-              label: "Technical contact person",
+              label: AppLocalizations.of(context)!
+                  .translate('technical_contact_person'),
             ),
             const SizedBox(height: 30),
 
@@ -381,14 +399,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 3,
-                  ),
-                )
-                    : const Text("Save"),
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 3,
+                        ),
+                      )
+                    : Text(AppLocalizations.of(context)!.translate('save')),
               ),
             ),
           ],

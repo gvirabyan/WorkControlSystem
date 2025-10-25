@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
 import '../ui_elements/app_input_field.dart';
@@ -73,9 +74,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          "Log In",
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context)!.translate('login'),
+          style: const TextStyle(
             color: Colors.blue,
             fontWeight: FontWeight.bold,
           ),
@@ -94,10 +95,10 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Welcome",
+              Text(
+                AppLocalizations.of(context)!.translate('welcome'),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: Colors.blue,
@@ -108,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Email
               AppInputField(
                 controller: _emailController,
-                label: "Email",
+                label: AppLocalizations.of(context)!.translate('email'),
                 hint: "example@gmail.com",
                 keyboardType: TextInputType.emailAddress,
               ),
@@ -118,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // Password
               AppInputField(
                 controller: _passwordController,
-                label: "Password",
+                label: AppLocalizations.of(context)!.translate('password'),
                 hint: "********",
                 obscureText: _obscurePassword,
                 suffixIcon: IconButton(
@@ -138,9 +139,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {},
-                  child: const Text(
-                    "Forget Password",
-                    style: TextStyle(color: Colors.blue),
+                  child: Text(
+                    AppLocalizations.of(context)!.translate('forget_password'),
+                    style: const TextStyle(color: Colors.blue),
                   ),
                 ),
               ),
@@ -161,20 +162,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    ),
-                  )
-                      : const Text("Log In"),
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )
+                      : Text(AppLocalizations.of(context)!.translate('login')),
                 ),
               ),
               const SizedBox(height: 20),
 
               // Social login
-              const Center(child: Text("or sign up with")),
+              Center(
+                  child: Text(AppLocalizations.of(context)!
+                      .translate('or_sign_up_with'))),
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -197,12 +200,13 @@ class _LoginScreenState extends State<LoginScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text("Don’t have an account? "),
+                  Text(AppLocalizations.of(context)!
+                      .translate('dont_have_an_account')),
                   GestureDetector(
                     onTap: () => Navigator.pushNamed(context, '/signup'),
-                    child: const Text(
-                      "Sign Up",
-                      style: TextStyle(color: Colors.blue),
+                    child: Text(
+                      AppLocalizations.of(context)!.translate('signup'),
+                      style: const TextStyle(color: Colors.blue),
                     ),
                   ),
                 ],

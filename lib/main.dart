@@ -3,6 +3,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:pot/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'package:pot/screens/splash_screen.dart';
 import 'package:pot/screens/welcome_screen.dart';
@@ -13,7 +16,6 @@ import 'package:pot/screens/employee_dashboard/employee_dashboard_screen.dart';
 import 'package:pot/screens/company_dashboard/graphic/employee_data_table.dart';
 import 'package:pot/services/firebase_messaging_service.dart';
 
-/// Обработчик background уведомлений (должен быть top-level!)
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   debugPrint('Background message: ${message.notification?.title}');
@@ -22,37 +24,70 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Инициализация Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Регистрация background handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // App Check защита
   await FirebaseAppCheck.instance.activate(
     webProvider: ReCaptchaV3Provider('recaptcha-v3-site-key'),
     androidProvider:
-    kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
     appleProvider: AppleProvider.appAttest,
   );
 
-  // Инициализация Firebase Messaging
   final firebaseMessagingService = FirebaseMessagingService();
   await firebaseMessagingService.initialize();
 
-  // Получение токена
   final String? token = await firebaseMessagingService.getToken();
   debugPrint('🔥 Firebase Messaging Token: $token');
-
-
 
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  static void setLocale(BuildContext context, Locale newLocale) {
+    _MyAppState? state = context.findAncestorStateOfType<_MyAppState>();
+    state?.setLocale(newLocale);
+  }
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocale();
+  }
+
+  _loadLocale() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? languageCode = prefs.getString('languageCode');
+    if (languageCode != null) {
+      setState(() {
+        _locale = Locale(languageCode, '');
+      });
+    }
+  }
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+    _saveLocale(locale);
+  }
+
+  _saveLocale(Locale locale) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('languageCode', locale.languageCode);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +98,27 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: Colors.white,
       ),
+      locale: _locale,
+      supportedLocales: const [
+        Locale('en', ''),
+        Locale('fr', ''),
+        Locale('de', ''),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      localeResolutionCallback: (locale, supportedLocales) {
+        for (var supportedLocale in supportedLocales) {
+          if (supportedLocale.languageCode == locale?.languageCode &&
+              supportedLocale.countryCode == locale?.countryCode) {
+            return supportedLocale;
+          }
+        }
+        return supportedLocales.first;
+      },
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),

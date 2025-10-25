@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class PlansPage extends StatefulWidget {
   const PlansPage({Key? key}) : super(key: key);
@@ -8,39 +9,45 @@ class PlansPage extends StatefulWidget {
 }
 
 class _TariffPageState extends State<PlansPage> {
-  final List<PackageModel> packages = [
-    PackageModel(
-      id: 'free',
-      title: 'Free',
-      priceText: '\$0',
-      usersText: '2 users',
-    ),
-    PackageModel(
-      id: 'basic',
-      title: 'Basic',
-      priceText: '\$69',
-      usersText: '5 users',
-    ),
-    PackageModel(
-      id: 'standard',
-      title: 'Standard',
-      priceText: '\$119',
-      usersText: '10 users',
-    ),
-    PackageModel(
-      id: 'business',
-      title: 'Business',
-      priceText: '\$159',
-      usersText: '15 users',
-    ),
-    PackageModel(
-      id: 'ultimate',
-      title: 'Ultimate',
-      priceText: '>15 users',
-      usersText: 'Custom',
-      isUltimate: true,
-    ),
-  ];
+  late final List<PackageModel> packages;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    packages = [
+      PackageModel(
+        id: 'free',
+        title: AppLocalizations.of(context)!.translate('free'),
+        priceText: '\$0',
+        usersText: AppLocalizations.of(context)!.translate('2_users'),
+      ),
+      PackageModel(
+        id: 'basic',
+        title: AppLocalizations.of(context)!.translate('basic'),
+        priceText: '\$69',
+        usersText: AppLocalizations.of(context)!.translate('5_users'),
+      ),
+      PackageModel(
+        id: 'standard',
+        title: AppLocalizations.of(context)!.translate('standard'),
+        priceText: '\$119',
+        usersText: AppLocalizations.of(context)!.translate('10_users'),
+      ),
+      PackageModel(
+        id: 'business',
+        title: AppLocalizations.of(context)!.translate('business'),
+        priceText: '\$159',
+        usersText: AppLocalizations.of(context)!.translate('15_users'),
+      ),
+      PackageModel(
+        id: 'ultimate',
+        title: AppLocalizations.of(context)!.translate('ultimate'),
+        priceText: AppLocalizations.of(context)!.translate('over_15_users'),
+        usersText: AppLocalizations.of(context)!.translate('custom'),
+        isUltimate: true,
+      ),
+    ];
+  }
 
   String? selectedPackageId;
   int ultimateEmployees = 16;
@@ -49,7 +56,7 @@ class _TariffPageState extends State<PlansPage> {
   @override
   void initState() {
     super.initState();
-    selectedPackageId = packages.first.id; // Устанавливаем "Free" как выбранный по умолчанию
+    selectedPackageId = 'free';
   }
 
   @override
@@ -61,7 +68,7 @@ class _TariffPageState extends State<PlansPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              'Select the package that fits your team. Tap a card to select it. For Ultimate, enter number of employees to calculate price.',
+              AppLocalizations.of(context)!.translate('plans_intro'),
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
@@ -127,8 +134,10 @@ class _TariffPageState extends State<PlansPage> {
                         Text(
                           pkg.isUltimate
                               ? (isSelected
-                              ? 'Custom pricing'
-                              : '>15 users - choose to calculate')
+                                  ? AppLocalizations.of(context)!
+                                      .translate('custom_pricing')
+                                  : AppLocalizations.of(context)!
+                                      .translate('over_15_users_calculate'))
                               : '${pkg.priceText} • ${pkg.usersText}',
                           style: TextStyle(color: Colors.grey[700]),
                         ),
@@ -139,15 +148,16 @@ class _TariffPageState extends State<PlansPage> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              const Text('How many employees?'),
+                              Text(AppLocalizations.of(context)!
+                                  .translate('how_many_employees')),
                               _buildEmployeesInput(),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Calculated price: ${_formatPrice(_calculateUltimatePrice())}',
+                            '${AppLocalizations.of(context)!.translate('calculated_price')}${_formatPrice(_calculateUltimatePrice())}',
                             style:
-                            const TextStyle(fontWeight: FontWeight.w600),
+                                const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ],
                       ],
@@ -202,7 +212,8 @@ class _TariffPageState extends State<PlansPage> {
       height: 52,
       decoration: BoxDecoration(
         gradient: isSelected
-            ? const LinearGradient(colors: [Color(0xFF6A11CB), Color(0xFF2575FC)])
+            ? const LinearGradient(
+                colors: [Color(0xFF6A11CB), Color(0xFF2575FC)])
             : const LinearGradient(colors: [Colors.grey, Colors.grey]),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -246,10 +257,11 @@ class _TariffPageState extends State<PlansPage> {
   Widget _buildBottomSummary(BuildContext context) {
     String summary;
     if (selectedPackageId == null) {
-      summary = 'No package selected';
+      summary =
+          AppLocalizations.of(context)!.translate('no_package_selected');
     } else if (selectedPackageId == 'ultimate') {
       summary =
-      'Ultimate • $ultimateEmployees users • ${_formatPrice(_calculateUltimatePrice())}';
+          'Ultimate • $ultimateEmployees users • ${_formatPrice(_calculateUltimatePrice())}';
     } else {
       final pkg = packages.firstWhere((p) => p.id == selectedPackageId);
       summary = '${pkg.title} • ${pkg.priceText} • ${pkg.usersText}';
@@ -267,9 +279,9 @@ class _TariffPageState extends State<PlansPage> {
             onPressed: selectedPackageId == null
                 ? null
                 : () {
-              Navigator.of(context).pushReplacementNamed('/home');
-            },
-            child: const Text('Confirm'),
+                    Navigator.of(context).pushReplacementNamed('/home');
+                  },
+            child: Text(AppLocalizations.of(context)!.translate('confirm')),
           ),
         ],
       ),

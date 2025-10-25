@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart'; // <--- НОВЫЙ ИМПОРТ
+import 'package:pot/l10n/app_localizations.dart';
 
 import '../../models/UserModel.dart';
 import '../../ui_elements/user_item.dart';
@@ -11,7 +12,8 @@ class CompanyEmployeesPage extends StatelessWidget {
   const CompanyEmployeesPage({super.key, required this.companyId});
 
   Future<String?> _getCompanyPromoCode() async {
-    final doc = await FirebaseFirestore.instance.collection('users').doc(companyId).get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(companyId).get();
     if (doc.exists) {
       return doc.data()?['promoCode'] as String?;
     }
@@ -19,18 +21,24 @@ class CompanyEmployeesPage extends StatelessWidget {
   }
 
   // --- ОБНОВЛЕННАЯ ФУНКЦИЯ: Отправка уведомлений ---
-  Future<void> _sendNotificationToEmployees(BuildContext context, String companyPromoCode) async {
+  Future<void> _sendNotificationToEmployees(
+      BuildContext context, String companyPromoCode) async {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Отправка уведомлений...')),
+      SnackBar(
+          content: Text(AppLocalizations.of(context)!
+              .translate('sending_notifications'))),
     );
 
     try {
-      final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable('sendTestNotification');
+      final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'europe-west1')
+          .httpsCallable('sendTestNotification');
 
       final results = await callable.call(<String, dynamic>{
         'promoCode': companyPromoCode,
-        'title': 'Важное объявление от компании',
-        'body': 'Пожалуйста, проверьте последние новости в приложении.',
+        'title': AppLocalizations.of(context)!
+            .translate('important_announcement_from_the_company'),
+        'body': AppLocalizations.of(context)!
+            .translate('please_check_the_latest_news_in_the_app'),
       });
 
       // 3. Обрабатываем результат
@@ -40,29 +48,35 @@ class CompanyEmployeesPage extends StatelessWidget {
 
       if (isSuccess) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('✅ Уведомления успешно отправлены сотрудникам!')),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .translate('notifications_sent_successfully'))),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('❌ Ошибка отправки: $message')),
+          SnackBar(
+              content: Text(
+                  '${AppLocalizations.of(context)!.translate('sending_error')}$message')),
         );
       }
-
     } on FirebaseFunctionsException catch (e) {
       // Обработка ошибок Cloud Function (например, 'invalid-argument')
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка вызова функции: ${e.message}')),
+        SnackBar(
+            content: Text(
+                '${AppLocalizations.of(context)!.translate('function_call_error')}${e.message}')),
       );
       print('Cloud Function Error: ${e.code} / ${e.message}');
     } catch (e) {
       // Общая ошибка
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Произошла непредвиденная ошибка: $e')),
+        SnackBar(
+            content: Text(
+                '${AppLocalizations.of(context)!.translate('an_unexpected_error_occurred')}$e')),
       );
     }
   }
   // --- КОНЕЦ ОБНОВЛЕННОЙ ФУНКЦИИ ---
-
 
   @override
   Widget build(BuildContext context) {
@@ -79,8 +93,12 @@ class CompanyEmployeesPage extends StatelessWidget {
 
         if (companyPromoCode == null) {
           return Scaffold(
-            appBar: AppBar(title: Text('Employees')),
-            body: const Center(child: Text('Company promo code not found')),
+            appBar: AppBar(
+                title:
+                    Text(AppLocalizations.of(context)!.translate('employees'))),
+            body: Center(
+                child: Text(AppLocalizations.of(context)!
+                    .translate('company_promo_code_not_found'))),
           );
         }
 
@@ -92,49 +110,56 @@ class CompanyEmployeesPage extends StatelessWidget {
               .where('promoCode', isEqualTo: companyPromoCode)
               .snapshots(),
           builder: (context, snapshot) {
-
             // ... (логика загрузки и пустого состояния)
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
-                appBar: AppBar(title: Text('Employees')),
+                appBar: AppBar(
+                    title: Text(
+                        AppLocalizations.of(context)!.translate('employees'))),
                 body: const Center(child: CircularProgressIndicator()),
               );
             }
 
             final users = snapshot.data?.docs
-                .map((doc) => UserModel.fromMap(
-              doc.id,
-              doc.data() as Map<String, dynamic>,
-            ))
-                .toList() ?? [];
+                    .map((doc) => UserModel.fromMap(
+                          doc.id,
+                          doc.data() as Map<String, dynamic>,
+                        ))
+                    .toList() ??
+                [];
 
             return Scaffold(
               appBar: AppBar(
-                title: const Text('Company Employees'),
+                title: Text(AppLocalizations.of(context)!
+                    .translate('company_employees')),
                 actions: [
                   // --- КНОПКА, ВЫЗЫВАЮЩАЯ CLOUD FUNCTION ---
                   IconButton(
                     icon: const Icon(Icons.send),
-                    tooltip: 'Send Notifications to Employees',
+                    tooltip: AppLocalizations.of(context)!
+                        .translate('send_notifications_to_employees'),
                     onPressed: users.isEmpty
                         ? null
-                        : () => _sendNotificationToEmployees(context, companyPromoCode),
+                        : () => _sendNotificationToEmployees(
+                            context, companyPromoCode),
                   ),
                   // --- КОНЕЦ КНОПКИ ---
                 ],
               ),
               body: users.isEmpty
-                  ? const Center(child: Text('No staff found'))
+                  ? Center(
+                      child: Text(AppLocalizations.of(context)!
+                          .translate('no_staff_found')))
                   : ListView.builder(
-                padding: const EdgeInsets.all(8),
-                itemCount: users.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: UserItem(user: users[index]),
-                  );
-                },
-              ),
+                      padding: const EdgeInsets.all(8),
+                      itemCount: users.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: UserItem(user: users[index]),
+                        );
+                      },
+                    ),
             );
           },
         );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class DocumentFilterDialog extends StatefulWidget {
   final Function(DateTime?, DateTime?, Map<String, bool>) onApplyFilter;
@@ -34,7 +35,7 @@ class _DocumentFilterDialogState extends State<DocumentFilterDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Filter Documents'),
+      title: Text(AppLocalizations.of(context)!.translate('filter_documents')),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -43,8 +44,8 @@ class _DocumentFilterDialogState extends State<DocumentFilterDialog> {
               Expanded(
                 child: Text(
                   _startDate == null
-                      ? 'Start Date'
-                      : 'From: ${_startDate!.toLocal().toString().split(' ')[0]}',
+                      ? AppLocalizations.of(context)!.translate('start_date')
+                      : '${AppLocalizations.of(context)!.translate('from')}${_startDate!.toLocal().toString().split(' ')[0]}',
                 ),
               ),
               IconButton(
@@ -70,8 +71,8 @@ class _DocumentFilterDialogState extends State<DocumentFilterDialog> {
               Expanded(
                 child: Text(
                   _endDate == null
-                      ? 'End Date'
-                      : 'To: ${_endDate!.toLocal().toString().split(' ')[0]}',
+                      ? AppLocalizations.of(context)!.translate('end_date')
+                      : '${AppLocalizations.of(context)!.translate('to')}${_endDate!.toLocal().toString().split(' ')[0]}',
                 ),
               ),
               IconButton(
@@ -93,7 +94,7 @@ class _DocumentFilterDialogState extends State<DocumentFilterDialog> {
             ],
           ),
           const SizedBox(height: 16),
-          const Text('Document Type'),
+          Text(AppLocalizations.of(context)!.translate('document_type')),
           ..._documentTypes.keys.map((String key) {
             return CheckboxListTile(
               title: Text(key),
@@ -112,14 +113,14 @@ class _DocumentFilterDialogState extends State<DocumentFilterDialog> {
           onPressed: () {
             Navigator.of(context).pop();
           },
-          child: const Text('Cancel'),
+          child: Text(AppLocalizations.of(context)!.translate('cancel')),
         ),
         TextButton(
           onPressed: () {
             widget.onApplyFilter(_startDate, _endDate, _documentTypes);
             Navigator.of(context).pop();
           },
-          child: const Text('Apply'),
+          child: Text(AppLocalizations.of(context)!.translate('apply')),
         ),
       ],
     );

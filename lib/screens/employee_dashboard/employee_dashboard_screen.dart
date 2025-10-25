@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:pot/screens/employee_dashboard/profile/employee_profile_items.dart';
 import 'package:pot/screens/welcome_screen.dart';
 import 'package:pot/services/auth_service.dart';
@@ -79,7 +80,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-              (route) => false,
+          (route) => false,
         );
       }
       return; // Прерываем дальнейшее выполнение
@@ -92,7 +93,8 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
 
       _pages = [
         HomePage(userId: _userId!),
-        HistoryPage(promoCode: _promoCode!), // <-- Передаем promoCode в HistoryPage
+        HistoryPage(
+            promoCode: _promoCode!), // <-- Передаем promoCode в HistoryPage
         DocumentsPage(),
         ProfileItems(companyId: _userId!),
       ];
@@ -116,7 +118,7 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => const WelcomeScreen()),
-            (route) => false,
+        (route) => false,
       );
     }
   }
@@ -132,19 +134,28 @@ class _EmployeeDashboardState extends State<EmployeeDashboard> {
 
     // Если загрузка завершена, _pages гарантированно инициализирован
     return Scaffold(
-      appBar: const CustomAppBar(
-        title: "Employee Dashboard",
+      appBar: CustomAppBar(
+        title:
+            AppLocalizations.of(context)!.translate('employee_dashboard'),
       ),
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.file_copy), label: 'Documents'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        items: [
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.home),
+              label: AppLocalizations.of(context)!.translate('home')),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.history),
+              label: AppLocalizations.of(context)!.translate('history')),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.file_copy),
+              label: AppLocalizations.of(context)!.translate('documents')),
+          BottomNavigationBarItem(
+              icon: const Icon(Icons.person),
+              label: AppLocalizations.of(context)!.translate('profile')),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blueAccent,

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class CompanyNotesPage extends StatefulWidget {
   final String companyPromoCode;
@@ -21,7 +22,8 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
   Future<void> _openNoteDialog({DocumentSnapshot? note}) async {
     await showDialog(
       context: context,
-      builder: (_) => NoteDialog(note: note, companyPromoCode: widget.companyPromoCode),
+      builder: (_) =>
+          NoteDialog(note: note, companyPromoCode: widget.companyPromoCode),
     );
   }
 
@@ -30,11 +32,16 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
       context: context,
       barrierColor: Colors.black.withOpacity(0.45),
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete note'),
-        content: const Text('Are you sure you want to delete this note?'),
+        title: Text(AppLocalizations.of(context)!.translate('delete_note')),
+        content: Text(AppLocalizations.of(context)!
+            .translate('are_you_sure_you_want_to_delete_this_note')),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Delete')),
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: Text(AppLocalizations.of(context)!.translate('cancel'))),
+          ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text(AppLocalizations.of(context)!.translate('delete'))),
         ],
       ),
     );
@@ -43,11 +50,15 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
       try {
         await _notesColl.doc(note.id).delete();
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note deleted')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.translate('note_deleted'))));
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Delete failed: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(
+                  '${AppLocalizations.of(context)!.translate('delete_failed')}$e')));
         }
       }
     }
@@ -62,15 +73,20 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
       final List<String> names = [];
       const chunkSize = 10;
       for (var i = 0; i < idStrings.length; i += chunkSize) {
-        final chunk = idStrings.sublist(i, (i + chunkSize).clamp(0, idStrings.length));
+        final chunk =
+            idStrings.sublist(i, (i + chunkSize).clamp(0, idStrings.length));
         final q = await FirebaseFirestore.instance
             .collection('users')
             .where(FieldPath.documentId, whereIn: chunk)
             .get();
         for (var doc in q.docs) {
           final d = doc.data() as Map<String, dynamic>? ?? {};
-          final n = (d['name'] ?? '${d['firstName'] ?? ''} ${d['lastName'] ?? ''}').toString().trim();
-          names.add(n.isEmpty ? 'Unnamed' : n);
+          final n = (d['name'] ?? '${d['firstName'] ?? ''} ${d['lastName'] ?? ''}')
+              .toString()
+              .trim();
+          names.add(n.isEmpty
+              ? AppLocalizations.of(context)!.translate('unnamed')
+              : n);
         }
       }
       return names.join(', ');
@@ -83,12 +99,12 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Company Notes'),
+        title: Text(AppLocalizations.of(context)!.translate('company_notes')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _openNoteDialog(),
-            tooltip: 'Create note',
+            tooltip: AppLocalizations.of(context)!.translate('create_note'),
           ),
         ],
       ),
@@ -103,11 +119,16 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error loading notes: ${snapshot.error}'));
+            return Center(
+                child: Text(
+                    '${AppLocalizations.of(context)!.translate('error_loading_notes')}${snapshot.error}'));
           }
 
           final notes = snapshot.data?.docs ?? [];
-          if (notes.isEmpty) return const Center(child: Text('No notes yet.'));
+          if (notes.isEmpty)
+            return Center(
+                child: Text(
+                    AppLocalizations.of(context)!.translate('no_notes_yet')));
 
           return ListView.separated(
             padding: const EdgeInsets.all(12),
@@ -116,29 +137,43 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
             itemBuilder: (context, index) {
               final noteDoc = notes[index];
               final data = noteDoc.data() as Map<String, dynamic>? ?? {};
-              final title = (data['title'] ?? 'Untitled').toString();
+              final title = (data['title'] ??
+                      AppLocalizations.of(context)!.translate('unnamed'))
+                  .toString();
               final text = (data['text'] ?? '').toString();
-              final created = data['createdAt'] is Timestamp ? _formatDate(data['createdAt'] as Timestamp) : '-';
+              final created = data['createdAt'] is Timestamp
+                  ? _formatDate(data['createdAt'] as Timestamp)
+                  : '-';
               final employeeIds = List<dynamic>.from(data['employees'] ?? []);
 
               return FutureBuilder<String>(
                 future: _employeeNamesForNote(employeeIds),
                 builder: (ctx, namesSnap) {
-                  final employeesLine = namesSnap.connectionState == ConnectionState.waiting
-                      ? 'Loading recipients...'
-                      : (namesSnap.data ?? '-');
+                  final employeesLine =
+                      namesSnap.connectionState == ConnectionState.waiting
+                          ? AppLocalizations.of(context)!
+                              .translate('loading_recipients')
+                          : (namesSnap.data ?? '-');
 
                   return ListTile(
-                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                    title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    contentPadding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    title: Text(title,
+                        style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         if (text.isNotEmpty) Text(text),
                         const SizedBox(height: 6),
-                        Text('Recipients: $employeesLine', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(
+                            '${AppLocalizations.of(context)!.translate('recipients')}$employeesLine',
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey)),
                         const SizedBox(height: 4),
-                        Text('Created: $created', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                        Text(
+                            '${AppLocalizations.of(context)!.translate('created')}$created',
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.grey)),
                       ],
                     ),
                     isThreeLine: text.isNotEmpty,
@@ -150,9 +185,15 @@ class _CompanyNotesPageState extends State<CompanyNotesPage> {
                           _confirmAndDelete(noteDoc);
                         }
                       },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      itemBuilder: (_) => [
+                        PopupMenuItem(
+                            value: 'edit',
+                            child: Text(
+                                AppLocalizations.of(context)!.translate('edit'))),
+                        PopupMenuItem(
+                            value: 'delete',
+                            child: Text(AppLocalizations.of(context)!
+                                .translate('delete'))),
                       ],
                     ),
                   );
@@ -187,7 +228,8 @@ class _NoteDialogState extends State<NoteDialog> {
     super.initState();
     titleController = TextEditingController(text: widget.note?['title'] ?? '');
     textController = TextEditingController(text: widget.note?['text'] ?? '');
-    final initialEmployees = List<String>.from(widget.note?['employees'] ?? []);
+    final initialEmployees =
+        List<String>.from(widget.note?['employees'] ?? []);
     selectedEmployeeIds.addAll(initialEmployees);
     selectAll = false;
   }
@@ -204,7 +246,9 @@ class _NoteDialogState extends State<NoteDialog> {
     final text = textController.text.trim();
     if (title.isEmpty && text.isEmpty && selectedEmployeeIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter title, text or select at least one employee')),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!
+                .translate('enter_title_text_or_select_employee'))),
       );
       return;
     }
@@ -225,18 +269,24 @@ class _NoteDialogState extends State<NoteDialog> {
         payload['createdAt'] = now;
         await notesColl.add(payload);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note created')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.translate('note_created'))));
         }
       } else {
         await notesColl.doc(widget.note!.id).update(payload);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Note updated')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content:
+                  Text(AppLocalizations.of(context)!.translate('note_updated'))));
         }
       }
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to save note: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                '${AppLocalizations.of(context)!.translate('failed_to_save_note')}$e')));
       }
     } finally {
       if (mounted) setState(() => submitting = false);
@@ -255,47 +305,70 @@ class _NoteDialogState extends State<NoteDialog> {
         final employees = snapshot.data?.docs ?? [];
 
         return AlertDialog(
-          title: Text(widget.note == null ? 'Create Note' : 'Edit Note'),
+          title: Text(widget.note == null
+              ? AppLocalizations.of(context)!.translate('create_note')
+              : AppLocalizations.of(context)!.translate('edit_note')),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Title')),
+                  TextField(
+                      controller: titleController,
+                      decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!
+                              .translate('title'))),
                   const SizedBox(height: 10),
-                  TextField(controller: textController, maxLines: 3, decoration: const InputDecoration(labelText: 'Note text')),
+                  TextField(
+                      controller: textController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!
+                              .translate('note_text'))),
                   const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Select employees:'),
+                      Text(AppLocalizations.of(context)!
+                          .translate('select_employees_colon')),
                       TextButton(
                         onPressed: () {
                           setState(() {
                             selectAll = !selectAll;
                             selectedEmployeeIds.clear();
                             if (selectAll) {
-                              selectedEmployeeIds.addAll(employees.map((e) => e.id));
+                              selectedEmployeeIds
+                                  .addAll(employees.map((e) => e.id));
                             }
                           });
                         },
-                        child: Text(selectAll ? 'Unselect All' : 'Select All'),
+                        child: Text(selectAll
+                            ? AppLocalizations.of(context)!
+                                .translate('unselect_all')
+                            : AppLocalizations.of(context)!
+                                .translate('select_all')),
                       ),
                     ],
                   ),
                   const Divider(),
                   if (employees.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text('No employees available'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(AppLocalizations.of(context)!
+                          .translate('no_employees_available')),
                     ),
                   ...employees.map((e) {
-                    final name = (e['name'] ?? '${e['firstName'] ?? ''} ${e['lastName'] ?? ''}').toString().trim();
+                    final name = (e['name'] ??
+                            '${e['firstName'] ?? ''} ${e['lastName'] ?? ''}')
+                        .toString()
+                        .trim();
                     final id = e.id;
                     final checked = selectedEmployeeIds.contains(id);
                     return CheckboxListTile(
-                      title: Text(name.isEmpty ? 'Unnamed' : name),
+                      title: Text(name.isEmpty
+                          ? AppLocalizations.of(context)!.translate('unnamed')
+                          : name),
                       value: checked,
                       onChanged: (val) {
                         setState(() {
@@ -314,8 +387,14 @@ class _NoteDialogState extends State<NoteDialog> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-            ElevatedButton(onPressed: submitting ? null : _saveNote, child: Text(widget.note == null ? 'Create' : 'Save')),
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(AppLocalizations.of(context)!.translate('cancel'))),
+            ElevatedButton(
+                onPressed: submitting ? null : _saveNote,
+                child: Text(widget.note == null
+                    ? AppLocalizations.of(context)!.translate('create')
+                    : AppLocalizations.of(context)!.translate('save'))),
           ],
         );
       },

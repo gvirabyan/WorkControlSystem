@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:pot/screens/company_dashboard/profile/plans_page.dart';
 import 'package:pot/screens/company_dashboard/profile/privacy_policy_page.dart';
 import 'package:pot/screens/company_dashboard/profile/settings_page.dart';
@@ -30,36 +31,40 @@ class _ProfileItemsState extends State<ProfileItems> {
   late final List<Map<String, dynamic>> _menuItems;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _menuItems = [
       {
         'icon': Icons.person_outline,
-        'title': 'Profile',
+        'title': AppLocalizations.of(context)!.translate('profile'),
         'page': ProfilePage(companyId: widget.companyId),
       },
       {
         'icon': Icons.lock_outline,
-        'title': 'Privacy Policy',
+        'title': AppLocalizations.of(context)!.translate('privacy_policy'),
         'page': const PrivacyPolicyPage(),
       },
       {
         'icon': Icons.settings_outlined,
-        'title': 'Settings',
+        'title': AppLocalizations.of(context)!.translate('settings'),
         'page': const SettingsPage(),
       },
       {
         'icon': Icons.add_chart_sharp,
-        'title': 'Plans',
+        'title': AppLocalizations.of(context)!.translate('plans'),
         'page': const PlansPage(),
       },
       {
         'icon': Icons.help_outline,
-        'title': 'Help',
+        'title': AppLocalizations.of(context)!.translate('help'),
         'page': const HelpPage(),
       },
     ];
+  }
 
+  @override
+  void initState() {
+    super.initState();
     _loadCompanyData();
   }
 
@@ -78,7 +83,8 @@ class _ProfileItemsState extends State<ProfileItems> {
         });
       }
     } catch (e) {
-      debugPrint("Ошибка при загрузке компании: $e");
+      debugPrint(
+          "${AppLocalizations.of(context)!.translate('error_loading_company')}$e");
     }
   }
 
@@ -108,12 +114,17 @@ class _ProfileItemsState extends State<ProfileItems> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Аватар успешно обновлён ✅")),
+        SnackBar(
+            content: Text(AppLocalizations.of(context)!
+                .translate('avatar_updated_successfully'))),
       );
     } catch (e) {
-      debugPrint("Ошибка при загрузке аватара: $e");
+      debugPrint(
+          "${AppLocalizations.of(context)!.translate('error_uploading_avatar')}$e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Ошибка: $e")),
+        SnackBar(
+            content: Text(
+                '${AppLocalizations.of(context)!.translate('error')}$e')),
       );
     } finally {
       setState(() => _isUploading = false);
@@ -136,11 +147,12 @@ class _ProfileItemsState extends State<ProfileItems> {
                     CircleAvatar(
                       radius: 50,
                       backgroundColor: Colors.blue.shade100,
-                      backgroundImage:
-                      _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                      backgroundImage: _avatarUrl != null
+                          ? NetworkImage(_avatarUrl!)
+                          : null,
                       child: _avatarUrl == null
                           ? const Icon(Icons.business,
-                          size: 50, color: Colors.blue)
+                              size: 50, color: Colors.blue)
                           : null,
                     ),
                     if (_isUploading)
@@ -150,8 +162,10 @@ class _ProfileItemsState extends State<ProfileItems> {
               ),
               const SizedBox(height: 10),
               Text(
-                _companyName ?? "Loading...",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                _companyName ??
+                    AppLocalizations.of(context)!.translate('loading'),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 30),
             ],
@@ -160,24 +174,26 @@ class _ProfileItemsState extends State<ProfileItems> {
         Expanded(
           child: _selectedPage == null
               ? ListView(
-            children: [
-              ..._menuItems.map((item) => _buildMenuItem(
-                icon: item['icon'],
-                text: item['title'],
-                onTap: () => _openPage(item['page'], item['title']),
-              )),
-              const Divider(),
-              ListTile(
-                leading:
-                const Icon(Icons.logout, color: Colors.red, size: 28),
-                title: const Text(
-                  "Logout",
-                  style: TextStyle(fontSize: 16, color: Colors.red),
-                ),
-                onTap: _logout,
-              ),
-            ],
-          )
+                  children: [
+                    ..._menuItems.map((item) => _buildMenuItem(
+                          icon: item['icon'],
+                          text: item['title'],
+                          onTap: () =>
+                              _openPage(item['page'], item['title']),
+                        )),
+                    const Divider(),
+                    ListTile(
+                      leading:
+                          const Icon(Icons.logout, color: Colors.red, size: 28),
+                      title: Text(
+                        AppLocalizations.of(context)!.translate('logout'),
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.red),
+                      ),
+                      onTap: _logout,
+                    ),
+                  ],
+                )
               : _buildDetailPage(),
         ),
       ],
@@ -232,7 +248,7 @@ class _ProfileItemsState extends State<ProfileItems> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-            (route) => false,
+        (route) => false,
       );
     }
   }

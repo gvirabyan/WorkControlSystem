@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 import '../ui_elements/language_dropdown.dart';
 
@@ -28,12 +29,12 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Spacer(),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: Text(
-                      "Please login or register",
+                      AppLocalizations.of(context)!.translate('please_login_or_register'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
                       ),
@@ -58,9 +59,9 @@ class WelcomeScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.pushNamed(context, '/login');
                             },
-                            child: const Text(
-                              "Log In",
-                              style: TextStyle(fontSize: 16),
+                            child: Text(
+                              AppLocalizations.of(context)!.translate('login'),
+                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
                         ),
@@ -79,9 +80,9 @@ class WelcomeScreen extends StatelessWidget {
                             onPressed: () {
                               Navigator.pushNamed(context, '/signup');
                             },
-                            child: const Text(
-                              "Sign Up",
-                              style: TextStyle(fontSize: 16),
+                            child: Text(
+                              AppLocalizations.of(context)!.translate('signup'),
+                              style: const TextStyle(fontSize: 16),
                             ),
                           ),
                         ),
@@ -94,7 +95,7 @@ class WelcomeScreen extends StatelessWidget {
             ),
 
             // ✅ Верхний правый угол: выбор языка
-            Positioned(
+            const Positioned(
               top: 16,
               right: 16,
               child: LanguageDropdown(),
@@ -105,5 +106,3 @@ class WelcomeScreen extends StatelessWidget {
     );
   }
 }
-
-

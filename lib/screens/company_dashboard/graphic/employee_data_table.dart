@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 // Placeholder for EmployeeDataTable. Replace with your actual table.
 class EmployeeDataTable extends StatelessWidget {
@@ -14,7 +15,9 @@ class EmployeeDataTable extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Table: $scheduleType',
+              AppLocalizations.of(context)!
+                  .translate('table_schedule')
+                  .replaceAll('{scheduleType}', scheduleType),
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -38,9 +41,10 @@ class EmployeeDataTable extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Center(
+              child: Center(
                 child: Text(
-                  'Employee schedule table content goes here...',
+                  AppLocalizations.of(context)!.translate(
+                      'employee_schedule_table_content_goes_here'),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -64,17 +68,28 @@ class _GraphicsScreenState extends State<GraphicsScreen> {
   int _selectedIndex = 0;
 
   // Titles for AppBar
-  static const List<String> _pageTitles = [
-    'Work Schedule',
-    'Vacation Schedule',
-    'Break Schedule',
-  ];
+  late final List<String> _pageTitles;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pageTitles = [
+      AppLocalizations.of(context)!.translate('work_schedule'),
+      AppLocalizations.of(context)!.translate('vacation_schedule'),
+      AppLocalizations.of(context)!.translate('break_schedule'),
+    ];
+  }
 
   // Page widgets using the table with different schedule types
   late final List<Widget> _pages = <Widget>[
-    const EmployeeDataTable(scheduleType: 'Work Schedule'),
-    const EmployeeDataTable(scheduleType: 'Vacation Schedule'),
-    const EmployeeDataTable(scheduleType: 'Break Schedule'),
+    EmployeeDataTable(
+        scheduleType:
+            AppLocalizations.of(context)!.translate('work_schedule')),
+    EmployeeDataTable(
+        scheduleType:
+            AppLocalizations.of(context)!.translate('vacation_schedule')),
+    EmployeeDataTable(
+        scheduleType:
+            AppLocalizations.of(context)!.translate('break_schedule')),
   ];
 
   void _onItemTapped(int index) {
@@ -97,18 +112,19 @@ class _GraphicsScreenState extends State<GraphicsScreen> {
 
       // Navigation buttons at the bottom
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.access_time),
-            label: 'Work Schedule',
+            icon: const Icon(Icons.access_time),
+            label: AppLocalizations.of(context)!.translate('work_schedule'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.beach_access),
-            label: 'Vacation Schedule',
+            icon: const Icon(Icons.beach_access),
+            label:
+                AppLocalizations.of(context)!.translate('vacation_schedule'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.coffee),
-            label: 'Break Schedule',
+            icon: const Icon(Icons.coffee),
+            label: AppLocalizations.of(context)!.translate('break_schedule'),
           ),
         ],
         currentIndex: _selectedIndex,
@@ -120,4 +136,3 @@ class _GraphicsScreenState extends State<GraphicsScreen> {
     );
   }
 }
-

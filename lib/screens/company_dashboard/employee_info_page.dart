@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'package:pot/ui_elements/task_card.dart';
@@ -39,9 +40,9 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
         .doc(widget.userId)
         .get()
         .then((doc) {
-          _contractUrl = doc.data()?['urlContract'];
-          return doc;
-        });
+      _contractUrl = doc.data()?['urlContract'];
+      return doc;
+    });
   }
 
   final _hiddenFields = ['type', 'createdAt', 'password', 'promoCode'];
@@ -71,11 +72,7 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     _controllers.forEach((key, controller) {
       if (!_readonlyFields.contains(key)) {
         updatedData[key] =
-            controller.text.isNotEmpty
-                ? controller.text
-                : key == 'salary'
-                ? '0'
-                : '';
+            controller.text.isNotEmpty ? controller.text : (key == 'salary' ? '0' : '');
       }
     });
 
@@ -85,7 +82,9 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
         .update(updatedData);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Changes saved successfully ✅')),
+      SnackBar(
+          content: Text(AppLocalizations.of(context)!
+              .translate('changes_saved_successfully'))),
     );
   }
 
@@ -99,7 +98,8 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
       if (result == null) {
         setState(() {
           _isUploading = false;
-          _uploadMessage = '❌ Upload canceled';
+          _uploadMessage =
+              AppLocalizations.of(context)!.translate('upload_canceled');
         });
         return;
       }
@@ -137,13 +137,15 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
         _contractUrl = url;
         _isUploading = false;
         _uploadProgress = 0.0;
-        _uploadMessage = '✅ Upload successful';
+        _uploadMessage =
+            AppLocalizations.of(context)!.translate('upload_successful');
       });
     } catch (e) {
       setState(() {
         _isUploading = false;
         _uploadProgress = 0.0;
-        _uploadMessage = '❌ Error: $e';
+        _uploadMessage =
+            '${AppLocalizations.of(context)!.translate('error')}$e';
       });
     }
   }
@@ -156,7 +158,9 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     } else {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Could not open contract.')));
+      ).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!
+              .translate('could_not_open_contract'))));
     }
   }
 
@@ -185,7 +189,8 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     return TextField(
       controller: controller,
       readOnly: readOnly,
-      keyboardType: key == 'salary' ? TextInputType.number : TextInputType.text,
+      keyboardType:
+          key == 'salary' ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
         labelText: key.replaceAll('_', ' ').toUpperCase(),
         labelStyle: const TextStyle(fontWeight: FontWeight.bold),
@@ -207,86 +212,91 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
 
     await showDialog(
       context: context,
-      builder:
-          (_) => AlertDialog(
-            title: const Text('Add Task'),
-            content: SingleChildScrollView(
-              child: Column(
-                children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: 'Title'),
-                  ),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-                  TextField(
-                    controller: statusController,
-                    decoration: const InputDecoration(labelText: 'Status'),
-                  ),
-                  TextField(
-                    controller: startDateController,
-                    decoration: const InputDecoration(labelText: 'Start Date'),
-                  ),
-                  TextField(
-                    controller: endDateController,
-                    decoration: const InputDecoration(labelText: 'End Date'),
-                  ),
-                  TextField(
-                    controller: dueDateController,
-                    decoration: const InputDecoration(labelText: 'Due Date'),
-                  ),
-                ],
+      builder: (_) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.translate('add_task')),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.translate('title')),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!
+                        .translate('description')),
               ),
-              ElevatedButton(
-                onPressed: () async {
-                  final task = model.Task(
-                    id: '',
-                    title:
-                        titleController.text.isEmpty
-                            ? '-'
-                            : titleController.text,
-                    description:
-                        descriptionController.text.isEmpty
-                            ? '-'
-                            : descriptionController.text,
-                    status:
-                        statusController.text.isEmpty
-                            ? '-'
-                            : statusController.text,
-                    startDate:
-                        startDateController.text.isEmpty
-                            ? '-'
-                            : startDateController.text,
-                    endDate:
-                        endDateController.text.isEmpty
-                            ? '-'
-                            : endDateController.text,
-                    dueDate:
-                        dueDateController.text.isEmpty
-                            ? '-'
-                            : dueDateController.text,
-                  );
-
-                  await FirebaseFirestore.instance
-                      .collection('users')
-                      .doc(widget.userId)
-                      .collection('tasks')
-                      .add(task.toMap());
-
-                  Navigator.pop(context);
-                },
-                child: const Text('Add'),
+              TextField(
+                controller: statusController,
+                decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.translate('status')),
+              ),
+              TextField(
+                controller: startDateController,
+                decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.translate('start_date')),
+              ),
+              TextField(
+                controller: endDateController,
+                decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.translate('end_date')),
+              ),
+              TextField(
+                controller: dueDateController,
+                decoration: InputDecoration(
+                    labelText:
+                        AppLocalizations.of(context)!.translate('due_date')),
               ),
             ],
           ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final task = model.Task(
+                id: '',
+                title: titleController.text.isEmpty
+                    ? '-'
+                    : titleController.text,
+                description: descriptionController.text.isEmpty
+                    ? '-'
+                    : descriptionController.text,
+                status: statusController.text.isEmpty
+                    ? '-'
+                    : statusController.text,
+                startDate: startDateController.text.isEmpty
+                    ? '-'
+                    : startDateController.text,
+                endDate: endDateController.text.isEmpty
+                    ? '-'
+                    : endDateController.text,
+                dueDate: dueDateController.text.isEmpty
+                    ? '-'
+                    : dueDateController.text,
+              );
+
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.userId)
+                  .collection('tasks')
+                  .add(task.toMap());
+
+              Navigator.pop(context);
+            },
+            child: Text(AppLocalizations.of(context)!.translate('add')),
+          ),
+        ],
+      ),
     );
   }
 
@@ -295,7 +305,8 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
       appBar: AppBar(
-        title: const Text('Employee Information'),
+        title: Text(
+            AppLocalizations.of(context)!.translate('employee_information')),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -313,16 +324,19 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data?.data() == null) {
-            return const Center(child: Text('User not found.'));
+            return Center(
+                child: Text(
+                    AppLocalizations.of(context)!.translate('user_not_found')));
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('An error occurred.'));
+            return Center(
+                child: Text(
+                    AppLocalizations.of(context)!.translate('an_error_occurred')));
           }
 
           final userData = snapshot.data!.data()!;
           final name = userData['name'] ?? 'Unknown';
-          final photoUrl =
-              userData['photoUrl'] ??
+          final photoUrl = userData['photoUrl'] ??
               'https://ui-avatars.com/api/?name=$name&background=1976D2&color=fff';
 
           _hiddenFields.forEach(userData.remove);
@@ -352,63 +366,64 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                 ),
                 const SizedBox(height: 24),
                 ExpansionTile(
-                  title: const Text(
-                    '👤 Personal Information',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  title: Text(
+                    AppLocalizations.of(context)!
+                        .translate('personal_information'),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   initiallyExpanded: false, // по умолчанию свернуто
-                  children:
-                      _personalFields
-                          .where((f) => userData.containsKey(f))
-                          .map(
-                            (f) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: _buildField(f, userData[f].toString()),
-                            ),
-                          )
-                          .toList(),
+                  children: _personalFields
+                      .where((f) => userData.containsKey(f))
+                      .map(
+                        (f) => Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: _buildField(f, userData[f].toString()),
+                        ),
+                      )
+                      .toList(),
                 ),
 
                 const SizedBox(height: 30),
                 ExpansionTile(
-                  title: const Text(
-                    '💼 Work Information',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  title: Text(
+                    AppLocalizations.of(context)!.translate('work_information'),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   initiallyExpanded: false, // по умолчанию свернуто
-                  children:
-                      _workFields.map((f) {
-                        if (f == 'workSchedule') {
-                          final scheduleText =
-                              (userData[f]?.toString().isNotEmpty ?? false)
-                                  ? userData[f].toString()
-                                  : '';
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: _buildField(
-                              f,
-                              scheduleText,
-                              hintText: 'Mon-Fri 09:00-18:00',
-                            ),
-                          );
-                        } else if (f == 'salary') {
-                          final salaryText =
-                              (userData[f]?.toString().isNotEmpty ?? false)
-                                  ? userData[f].toString()
-                                  : '0';
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: _buildField(f, salaryText),
-                          );
-                        } else if (userData.containsKey(f)) {
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: _buildField(f, userData[f].toString()),
-                          );
-                        } else {
-                          return const SizedBox.shrink();
-                        }
-                      }).toList(),
+                  children: _workFields.map((f) {
+                    if (f == 'workSchedule') {
+                      final scheduleText =
+                          (userData[f]?.toString().isNotEmpty ?? false)
+                              ? userData[f].toString()
+                              : '';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _buildField(
+                          f,
+                          scheduleText,
+                          hintText: 'Mon-Fri 09:00-18:00',
+                        ),
+                      );
+                    } else if (f == 'salary') {
+                      final salaryText =
+                          (userData[f]?.toString().isNotEmpty ?? false)
+                              ? userData[f].toString()
+                              : '0';
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _buildField(f, salaryText),
+                      );
+                    } else if (userData.containsKey(f)) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: _buildField(f, userData[f].toString()),
+                      );
+                    } else {
+                      return const SizedBox.shrink();
+                    }
+                  }).toList(),
                 ),
 
                 const SizedBox(height: 30),
@@ -427,20 +442,23 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => AllTasksPage(userId: widget.userId),
+                              builder: (_) =>
+                                  AllTasksPage(userId: widget.userId),
                             ),
                           );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue.shade700,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: const Text(
-                          '🗂 Tasks',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        child: Text(
+                          AppLocalizations.of(context)!.translate('tasks'),
+                          style: const TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -453,16 +471,23 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => WeeklyHistoryPage(userId: widget.userId),
+                              builder: (_) =>
+                                  WeeklyHistoryPage(userId: widget.userId),
                             ),
                           );
                         },
-                        icon: const Icon(Icons.calendar_month, color: Colors.white),
-                        label: const Text('History of last week', style: TextStyle(color: Colors.white)),
+                        icon: const Icon(Icons.calendar_month,
+                            color: Colors.white),
+                        label: Text(
+                            AppLocalizations.of(context)!
+                                .translate('history_of_last_week'),
+                            style: const TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue.shade700,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -475,16 +500,23 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => DailyReportPage(userId: widget.userId),
+                              builder: (_) =>
+                                  DailyReportPage(userId: widget.userId),
                             ),
                           );
                         },
-                        icon: const Icon(Icons.calendar_month, color: Colors.white),
-                        label: const Text('Daily Report', style: TextStyle(color: Colors.white)),
+                        icon: const Icon(Icons.calendar_month,
+                            color: Colors.white),
+                        label: Text(
+                            AppLocalizations.of(context)!
+                                .translate('daily_report'),
+                            style: const TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue.shade700,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -497,16 +529,22 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => VacationPage(userId: widget.userId),
+                              builder: (_) =>
+                                  VacationPage(userId: widget.userId),
                             ),
                           );
                         },
-                        icon: const Icon(Icons.beach_access, color: Colors.white),
-                        label: const Text('Vacations', style: TextStyle(color: Colors.white)),
+                        icon:
+                            const Icon(Icons.beach_access, color: Colors.white),
+                        label: Text(
+                            AppLocalizations.of(context)!.translate('vacations'),
+                            style: const TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.orange.shade700,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 40, vertical: 14),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -514,132 +552,133 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                   ],
                 ),
 
-
                 const SizedBox(height: 30),
-                const Center(
+                Center(
                   child: Text(
-                    '📑 Employment Contract',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    AppLocalizations.of(context)!
+                        .translate('employment_contract'),
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Center(
-                  child:
-                      _isUploading
-                          ? Column(
-                            children: [
-                              CircularProgressIndicator(
-                                value:
-                                    _uploadProgress > 0
-                                        ? _uploadProgress
-                                        : null,
-                                color: Colors.blue.shade700,
+                  child: _isUploading
+                      ? Column(
+                          children: [
+                            CircularProgressIndicator(
+                              value:
+                                  _uploadProgress > 0 ? _uploadProgress : null,
+                              color: Colors.blue.shade700,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              '${(_uploadProgress * 100).toStringAsFixed(0)}%',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 10),
+                            ),
+                            if (_uploadMessage != null) ...[
+                              const SizedBox(height: 8),
                               Text(
-                                '${(_uploadProgress * 100).toStringAsFixed(0)}%',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                _uploadMessage!,
+                                style: const TextStyle(color: Colors.black54),
                               ),
-                              if (_uploadMessage != null) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  _uploadMessage!,
-                                  style: const TextStyle(color: Colors.black54),
-                                ),
-                              ],
                             ],
-                          )
-                          : _contractUrl == null
+                          ],
+                        )
+                      : _contractUrl == null
                           ? ElevatedButton.icon(
-                            onPressed: _uploadContract,
-                            icon: const Icon(
-                              Icons.upload_file,
-                              color: Colors.white,
-                            ),
-                            label: const Text(
-                              'Upload Contract',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade700,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                                vertical: 14,
+                              onPressed: _uploadContract,
+                              icon: const Icon(
+                                Icons.upload_file,
+                                color: Colors.white,
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                              label: Text(
+                                AppLocalizations.of(context)!
+                                    .translate('upload_contract'),
+                                style: const TextStyle(color: Colors.white),
                               ),
-                            ),
-                          )
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade700,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            )
                           : Column(
-                            children: [
-                              ElevatedButton.icon(
-                                onPressed: _previewContract,
-                                icon: const Icon(
-                                  Icons.visibility,
-                                  color: Colors.white,
-                                ),
-                                label: const Text(
-                                  'Preview Contract',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue.shade700,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 40,
-                                    vertical: 14,
+                              children: [
+                                ElevatedButton.icon(
+                                  onPressed: _previewContract,
+                                  icon: const Icon(
+                                    Icons.visibility,
+                                    color: Colors.white,
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                  label: Text(
+                                    AppLocalizations.of(context)!
+                                        .translate('preview_contract'),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              ElevatedButton.icon(
-                                onPressed: _downloadContract,
-                                icon: const Icon(
-                                  Icons.download,
-                                  color: Colors.white,
-                                ),
-                                label: const Text(
-                                  'Download Contract',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.blue.shade700,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 40,
-                                    vertical: 14,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade700,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (_uploadMessage != null) ...[
-                                const SizedBox(height: 10),
-                                Text(
-                                  _uploadMessage!,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black54,
+                                const SizedBox(height: 12),
+                                ElevatedButton.icon(
+                                  onPressed: _downloadContract,
+                                  icon: const Icon(
+                                    Icons.download,
+                                    color: Colors.white,
+                                  ),
+                                  label: Text(
+                                    AppLocalizations.of(context)!
+                                        .translate('download_contract'),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade700,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 40,
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
                                   ),
                                 ),
+                                if (_uploadMessage != null) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    _uploadMessage!,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black54,
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
-                          ),
+                            ),
                 ),
                 const SizedBox(height: 40),
                 Center(
                   child: ElevatedButton.icon(
                     onPressed: _saveChanges,
                     icon: const Icon(Icons.save, color: Colors.white),
-                    label: const Text(
-                      'Save Changes',
-                      style: TextStyle(color: Colors.white),
+                    label: Text(
+                      AppLocalizations.of(context)!.translate('save_changes'),
+                      style: const TextStyle(color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green.shade500,
@@ -659,27 +698,27 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                     onPressed: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
-                        builder:
-                            (context) => AlertDialog(
-                              title: const Text('Confirm Action'),
-                              content: const Text(
-                                'Are you sure you want to end cooperation with this employee?',
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed:
-                                      () => Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                  ),
-                                  onPressed: () => Navigator.pop(context, true),
-                                  child: const Text('Confirm'),
-                                ),
-                              ],
+                        builder: (context) => AlertDialog(
+                          title: Text(AppLocalizations.of(context)!
+                              .translate('confirm_action')),
+                          content: Text(AppLocalizations.of(context)!.translate(
+                              'are_you_sure_you_want_to_end_cooperation')),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: Text(AppLocalizations.of(context)!
+                                  .translate('cancel')),
                             ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text(AppLocalizations.of(context)!
+                                  .translate('confirm')),
+                            ),
+                          ],
+                        ),
                       );
 
                       if (confirm == true) {
@@ -690,15 +729,17 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                               .update({'promoCode': null});
 
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Cooperation ended successfully.'),
+                            SnackBar(
+                              content: Text(AppLocalizations.of(context)!
+                                  .translate('cooperation_ended_successfully')),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Error: $e'),
+                              content: Text(
+                                  '${AppLocalizations.of(context)!.translate('error')}$e'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -706,9 +747,10 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                       }
                     },
                     icon: const Icon(Icons.stop_circle, color: Colors.white),
-                    label: const Text(
-                      'End Cooperation',
-                      style: TextStyle(
+                    label: Text(
+                      AppLocalizations.of(context)!
+                          .translate('end_cooperation'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -734,6 +776,3 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     );
   }
 }
-
-
-
