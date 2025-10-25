@@ -25,7 +25,7 @@ class CompanyEmployeesPage extends StatelessWidget {
     );
 
     try {
-      final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('sendTestNotification');
+      final HttpsCallable callable = FirebaseFunctions.instanceFor(region: 'europe-west1').httpsCallable('sendTestNotification');
 
       final results = await callable.call(<String, dynamic>{
         'promoCode': companyPromoCode,
