@@ -18,7 +18,7 @@ class HistoryPage extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('employee_action_history')
             .where('promoCode', isEqualTo: promoCode)
-            //.orderBy('datetimeStart', descending: true)
+            .orderBy('datetimeStart', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -133,6 +133,7 @@ class HistoryDetailPage extends StatelessWidget {
                 final start = data['datetimeStart'] as Timestamp?;
                 final end = data['datetimeEnd'] as Timestamp?;
                 final duration = _calculateDuration(start, end);
+                print(end);
 
                 return Container(
                   padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),

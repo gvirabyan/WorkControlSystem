@@ -8,6 +8,8 @@ class DailyReportPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final startOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+    final endOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
     final formattedDate =
         '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
 
@@ -15,10 +17,11 @@ class DailyReportPage extends StatelessWidget {
       appBar: AppBar(title: const Text('📅 Today\'s Report')),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
-            .collection('users')
-            .doc(userId)
-            .collection('workHistory')
-            .where('date', isEqualTo: formattedDate)
+            .collection('employee_action_history')
+            .where('userId', isEqualTo: userId)
+            .where('datetimeStart', isGreaterThanOrEqualTo: startOfDay)
+            .where('datetimeStart', isLessThanOrEqualTo: endOfDay)
+            .orderBy('datetimeStart', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -58,10 +61,11 @@ class DailyReportPage extends StatelessWidget {
                       const SizedBox(height: 8),
                       ...workEntries.map((entry) {
                         final data = entry.data();
-                        final start = data['startTime'] ?? '-';
-                        final end = data['endTime'] ?? '-';
-                        final task = data['taskName'] ?? '-';
-                        final duration = data['duration'] ?? '-';
+                        final start = _formatDateTime(data['datetimeStart']);
+                        final end = _formatDateTime(data['datetimeEnd']);
+                        final task = data['task'] ?? '-';
+                        final duration = _calculateDuration(
+                            data['datetimeStart'], data['datetimeEnd']);
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
@@ -94,4 +98,18 @@ class DailyReportPage extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatDateTime(Timestamp? timestamp) {
+  if (timestamp == null) return '-';
+  final date = timestamp.toDate();
+  return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+}
+
+String _calculateDuration(Timestamp? start, Timestamp? end) {
+  if (start == null || end == null) return '-';
+  final duration = end.toDate().difference(start.toDate());
+  final hours = duration.inHours;
+  final minutes = duration.inMinutes % 60;
+  return '${hours}h ${minutes}m';
 }
