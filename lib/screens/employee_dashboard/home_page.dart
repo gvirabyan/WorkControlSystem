@@ -63,25 +63,41 @@ class _HomePageState extends State<HomePage> {
 
     final data = doc.data()!;
     final status = data['currentStatus'] ?? 'Not Working';
+
+    // Проверяем наличие незавершённого действия
+    final query = await historyCollection
+        .where('userId', isEqualTo: widget.userId)
+        .where('datetimeEnd', isEqualTo: null)
+        .limit(1) // Ограничиваем до одного документа для производительности
+        .get();
+
+    if (query.docs.isNotEmpty) {
+      final currentAction = query.docs.first;
+      _currentActionDoc = currentAction.reference;
+      final desc = currentAction.data()['description'] ?? '';
+      _taskDescriptionController.text = desc;
+
+      // --- Восстановление времени ---
+      final startTimeStamp = currentAction.data()['datetimeStart'] as Timestamp?;
+      if (startTimeStamp != null) {
+        final startTime = startTimeStamp.toDate();
+        final now = DateTime.now();
+        final elapsedSeconds = now.difference(startTime).inSeconds;
+
+        setState(() {
+          _totalSeconds = elapsedSeconds > 0 ? elapsedSeconds : 0;
+        });
+      }
+      // --------------------------
+    }
+
     setState(() {
       _isWorking = status != 'Not Working';
       _isOnBreak = status == 'On Break';
     });
 
     if (_isWorking && !_isOnBreak) {
-      _startTimer();
-    }
-
-    // Проверяем наличие незавершённого действия
-    final query = await historyCollection
-        .where('userId', isEqualTo: widget.userId)
-        .where('datetimeEnd', isEqualTo: null)
-        .get();
-
-    if (query.docs.isNotEmpty) {
-      _currentActionDoc = query.docs.first.reference;
-      final desc = query.docs.first.data()['description'] ?? '';
-      _taskDescriptionController.text = desc;
+      _startTimer(); // Таймер запустится с восстановленным _totalSeconds
     }
   }
 
