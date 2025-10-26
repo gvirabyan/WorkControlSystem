@@ -200,7 +200,7 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
       keyboardType:
           key == 'salary' ? TextInputType.number : TextInputType.text,
       decoration: InputDecoration(
-        labelText: key.replaceAll('_', ' ').toUpperCase(),
+        labelText: AppLocalizations.of(context)!.translate(key),
         labelStyle: const TextStyle(fontWeight: FontWeight.bold),
         filled: true,
         fillColor: readOnly ? Colors.grey.shade200 : Colors.white,
@@ -352,7 +352,8 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                       child: ElevatedButton.icon(
                         onPressed: _showWorkScheduleDialog,
                         icon: const Icon(Icons.access_time),
-                        label: const Text('Work Schedule'),
+                        label: Text(AppLocalizations.of(context)!
+                            .translate('work_schedule')),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.indigo,
                           foregroundColor: Colors.white,

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class VacationPage extends StatelessWidget {
   final String userId;
 
   const VacationPage({super.key, required this.userId});
 
-  // Helper function to format Timestamp to 'dd.MM.yyyy'
   String _formatTimestamp(dynamic date) {
     if (date is Timestamp) {
       return DateFormat('dd.MM.yyyy').format(date.toDate());
@@ -15,7 +15,6 @@ class VacationPage extends StatelessWidget {
     return 'N/A';
   }
 
-  // Function to determine status color
   Color _getStatusColor(String status) {
     switch (status) {
       case 'approved':
@@ -31,8 +30,9 @@ class VacationPage extends StatelessWidget {
     }
   }
 
-  // General function to update status and optionally update the end date
-  Future<void> _updateStatus(BuildContext context, String docId, String newStatus, {DateTime? newEndDate}) async {
+  Future<void> _updateStatus(BuildContext context, String docId, String newStatus,
+      {DateTime? newEndDate}) async {
+    final localizations = AppLocalizations.of(context)!;
     final updateData = <String, dynamic>{'status': newStatus};
 
     if (newEndDate != null) {
@@ -48,22 +48,29 @@ class VacationPage extends StatelessWidget {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Status updated to "${newStatus.replaceAll('_', ' ')}"')),
+          SnackBar(
+              content: Text(
+                  '${localizations.translate('status_updated_to')} "${newStatus.replaceAll('_', ' ')}"')),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update status: $e')),
+          SnackBar(
+              content: Text(
+                  '${localizations.translate('failed_to_update_status')}: $e')),
         );
       }
     }
   }
 
-  // Dialog to handle early return
-  Future<void> _showEarlyReturnDialog(BuildContext context, String docId, DateTime currentStartDate, DateTime currentEndDate) async {
+  Future<void> _showEarlyReturnDialog(BuildContext context, String docId,
+      DateTime currentStartDate, DateTime currentEndDate) async {
+    final localizations = AppLocalizations.of(context)!;
     DateTime? selectedDate = DateTime.now();
-    if (selectedDate.isBefore(currentStartDate)) selectedDate = currentStartDate;
+    if (selectedDate.isBefore(currentStartDate)) {
+      selectedDate = currentStartDate;
+    }
     if (selectedDate.isAfter(currentEndDate)) selectedDate = currentEndDate;
 
     final TextEditingController dateController = TextEditingController(
@@ -88,17 +95,18 @@ class VacationPage extends StatelessWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('End Vacation Early'),
+          title: Text(localizations.translate('end_vacation_early')),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              const Text('Select the new date the employee returned to work:'),
+              Text(localizations
+                  .translate('select_new_date_employee_returned')),
               const SizedBox(height: 10),
               TextFormField(
                 controller: dateController,
                 readOnly: true,
                 decoration: InputDecoration(
-                  labelText: 'Return Date',
+                  labelText: localizations.translate('return_date'),
                   suffixIcon: IconButton(
                     icon: const Icon(Icons.calendar_today),
                     onPressed: pickDate,
@@ -110,11 +118,11 @@ class VacationPage extends StatelessWidget {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(localizations.translate('cancel')),
               onPressed: () => Navigator.of(dialogContext).pop(),
             ),
             ElevatedButton(
-              child: const Text('Confirm Early End'),
+              child: Text(localizations.translate('confirm_early_end')),
               onPressed: () {
                 if (selectedDate != null) {
                   Navigator.of(dialogContext).pop();
@@ -135,9 +143,10 @@ class VacationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Employee Vacations'),
+        title: Text(localizations.translate('employee_vacations')),
         backgroundColor: Colors.orange,
         foregroundColor: Colors.white,
       ),
@@ -145,7 +154,6 @@ class VacationPage extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('vacations')
             .where('userId', isEqualTo: userId)
-            //.orderBy('startDate', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -153,10 +161,11 @@ class VacationPage extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
-                'No vacation records found.',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                localizations.translate('no_vacation_records_found'),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
               ),
             );
           }
@@ -171,16 +180,20 @@ class VacationPage extends StatelessWidget {
               final startDateTimestamp = data['startDate'] as Timestamp?;
               final endDateTimestamp = data['endDate'] as Timestamp?;
               final reason = data['reason'] ?? 'N/A';
-              final status = (data['status'] ?? 'unknown').toString().toLowerCase();
+              final status =
+                  (data['status'] ?? 'unknown').toString().toLowerCase();
 
               final formattedStartDate = _formatTimestamp(startDateTimestamp);
               final formattedEndDate = _formatTimestamp(endDateTimestamp);
 
-              final currentStartDate = startDateTimestamp?.toDate() ?? DateTime.now();
-              final currentEndDate = endDateTimestamp?.toDate() ?? DateTime.now();
+              final currentStartDate =
+                  startDateTimestamp?.toDate() ?? DateTime.now();
+              final currentEndDate =
+                  endDateTimestamp?.toDate() ?? DateTime.now();
 
               return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 elevation: 3,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -200,7 +213,7 @@ class VacationPage extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'From $formattedStartDate to $formattedEndDate',
+                              '${localizations.translate('from')} $formattedStartDate ${localizations.translate('to')} $formattedEndDate',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -210,13 +223,13 @@ class VacationPage extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Text('Reason: $reason'),
+                      Text('${localizations.translate('reason')}: $reason'),
                       const SizedBox(height: 10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Status: ${status.replaceAll('_', ' ')[0].toUpperCase()}${status.replaceAll('_', ' ').substring(1)}',
+                            '${localizations.translate('status')}: ${status.replaceAll('_', ' ')[0].toUpperCase()}${status.replaceAll('_', ' ').substring(1)}',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               color: _getStatusColor(status),
@@ -224,21 +237,31 @@ class VacationPage extends StatelessWidget {
                           ),
                           if (status == 'pending') ...[
                             ElevatedButton(
-                              onPressed: () => _updateStatus(context, doc.id, 'approved'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
-                              child: const Text('Accept'),
+                              onPressed: () =>
+                                  _updateStatus(context, doc.id, 'approved'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white),
+                              child: Text(localizations.translate('accept')),
                             ),
                             ElevatedButton(
-                              onPressed: () => _updateStatus(context, doc.id, 'declined'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-                              child: const Text('Decline'),
+                              onPressed: () =>
+                                  _updateStatus(context, doc.id, 'declined'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white),
+                              child: Text(localizations.translate('decline')),
                             ),
-                          ] else if (status == 'vacation' || status == 'approved') ...[
+                          ] else if (status == 'vacation' ||
+                              status == 'approved') ...[
                             ElevatedButton.icon(
-                              onPressed: () => _showEarlyReturnDialog(context, doc.id, currentStartDate, currentEndDate),
+                              onPressed: () => _showEarlyReturnDialog(context,
+                                  doc.id, currentStartDate, currentEndDate),
                               icon: const Icon(Icons.logout),
-                              label: const Text('End Early'),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, foregroundColor: Colors.white),
+                              label: Text(localizations.translate('end_early')),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.blue,
+                                  foregroundColor: Colors.white),
                             ),
                           ],
                         ],

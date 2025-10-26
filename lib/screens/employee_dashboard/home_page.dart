@@ -175,23 +175,26 @@ class _HomePageState extends State<HomePage> {
       await _currentActionDoc!.update({
         'description': _taskDescriptionController.text,
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Description saved')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)!
+              .translate('description_saved'))));
     }
   }
 
   Future<void> _showTaskSelectionDialog() async {
     String? selectedTask;
+    final localizations = AppLocalizations.of(context)!;
 
     final snapshot =
-    await usersCollection.doc(widget.userId).collection('tasks').get();
+        await usersCollection.doc(widget.userId).collection('tasks').get();
 
     final taskTitles =
-    snapshot.docs.map((doc) => doc['title'] as String).toList();
+        snapshot.docs.map((doc) => doc['title'] as String).toList();
 
     if (taskTitles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No tasks available')),
+        SnackBar(
+            content: Text(localizations.translate('no_tasks_available'))),
       );
       return;
     }
@@ -204,11 +207,11 @@ class _HomePageState extends State<HomePage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: const Text('Select Task'),
+              title: Text(localizations.translate('select_task')),
               content: DropdownButton<String>(
                 isExpanded: true,
                 value: tempSelectedTask,
-                hint: const Text('Choose a task'),
+                hint: Text(localizations.translate('choose_a_task')),
                 items: taskTitles.map((title) {
                   return DropdownMenuItem(
                     value: title,
@@ -224,15 +227,15 @@ class _HomePageState extends State<HomePage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Cancel'),
+                  child: Text(localizations.translate('cancel')),
                 ),
                 ElevatedButton(
                   onPressed: tempSelectedTask == null
                       ? null
                       : () {
-                    Navigator.pop(context, tempSelectedTask);
-                  },
-                  child: const Text('OK'),
+                          Navigator.pop(context, tempSelectedTask);
+                        },
+                  child: Text(localizations.translate('ok')),
                 ),
               ],
             );
@@ -280,28 +283,29 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _takeBreak() async {
+    final localizations = AppLocalizations.of(context)!;
     String? reason = await showDialog<String>(
       context: context,
       builder: (context) {
         _breakReasonController.clear();
         return AlertDialog(
-          title: const Text('Break Reason'),
+          title: Text(localizations.translate('break_reason')),
           content: TextField(
             controller: _breakReasonController,
-            decoration:
-            const InputDecoration(hintText: 'Enter reason for break'),
+            decoration: InputDecoration(
+                hintText: localizations.translate('enter_reason_for_break')),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(localizations.translate('cancel')),
             ),
             ElevatedButton(
               onPressed: () {
                 if (_breakReasonController.text.isEmpty) return;
                 Navigator.pop(context, _breakReasonController.text);
               },
-              child: const Text('Save'),
+              child: Text(localizations.translate('save')),
             ),
           ],
         );
@@ -333,6 +337,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Center(
       child: SingleChildScrollView(
         child: Column(
@@ -340,10 +345,12 @@ class _HomePageState extends State<HomePage> {
           children: [
             Text(
               _isWorking
-                  ? (_isOnBreak ? 'On Break' : 'Currently Working')
-                  : 'Not Working',
+                  ? (_isOnBreak
+                      ? localizations.translate('on_break')
+                      : localizations.translate('currently_working'))
+                  : localizations.translate('not_working'),
               style:
-              const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             if (_isWorking)
@@ -356,7 +363,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             const SizedBox(height: 20),
-
             if (_isWorking)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -365,21 +371,22 @@ class _HomePageState extends State<HomePage> {
                     TextField(
                       controller: _taskDescriptionController,
                       maxLines: 3,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        labelText: 'Task Description / Notes',
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        labelText: localizations
+                            .translate('task_description_notes'),
                       ),
                     ),
                     const SizedBox(height: 10),
                     ElevatedButton(
                       onPressed: _saveTaskDescription,
-                      child: const Text('Save Description'),
+                      child: Text(
+                          localizations.translate('save_description')),
                     ),
                     const SizedBox(height: 20),
                   ],
                 ),
               ),
-
             if (!_isWorking)
               ElevatedButton(
                 onPressed: _toggleWorkState,
@@ -387,9 +394,9 @@ class _HomePageState extends State<HomePage> {
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
-                child: const Text('Start Work'),
+                child: Text(localizations.translate('start_work')),
               )
             else if (_isWorking && !_isOnBreak)
               Row(
@@ -403,7 +410,7 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 30, vertical: 15),
                     ),
-                    child: const Text('Finish Work'),
+                    child: Text(localizations.translate('finish_work')),
                   ),
                   const SizedBox(width: 20),
                   ElevatedButton(
@@ -414,7 +421,7 @@ class _HomePageState extends State<HomePage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 30, vertical: 15),
                     ),
-                    child: const Text('Break'),
+                    child: Text(localizations.translate('break')),
                   ),
                 ],
               )
@@ -425,9 +432,9 @@ class _HomePageState extends State<HomePage> {
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                   padding:
-                  const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
-                child: const Text('Continue Work'),
+                child: Text(localizations.translate('continue_work')),
               ),
           ],
         ),

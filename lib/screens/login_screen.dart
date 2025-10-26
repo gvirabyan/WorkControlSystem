@@ -32,7 +32,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (userData == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Invalid email or password")),
+          SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .translate('invalid_email_or_password'))),
         );
         setState(() => _isLoading = false);
         return;
@@ -56,7 +58,9 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(
+            content: Text(
+                '${AppLocalizations.of(context)!.translate('error')} $e')),
       );
       setState(() => _isLoading = false);
     }

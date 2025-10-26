@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class HistoryPage extends StatelessWidget {
-  final String promoCode; // <-- promoCode пользователя
+  final String promoCode;
 
   const HistoryPage({super.key, required this.promoCode});
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Work History'),
+        title: Text(localizations.translate('work_history')),
         backgroundColor: Colors.blue,
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -25,25 +27,25 @@ class HistoryPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(
-              child: Text('No history records found'),
+            return Center(
+              child: Text(localizations.translate('no_history_records_found')),
             );
           }
 
           final docs = snapshot.data!.docs;
 
-          // Группируем записи по дате (yyyy-MM-dd)
           final Map<String, List<QueryDocumentSnapshot>> groupedByDate = {};
           for (var doc in docs) {
             final data = doc.data() as Map<String, dynamic>;
             final timestamp = data['datetimeStart'] as Timestamp?;
             final dateKey = timestamp != null
                 ? DateFormat('yyyy-MM-dd').format(timestamp.toDate())
-                : 'Unknown Date';
+                : localizations.translate('unknown_date');
             groupedByDate.putIfAbsent(dateKey, () => []).add(doc);
           }
 
-          final sortedDates = groupedByDate.keys.toList()..sort((a, b) => b.compareTo(a));
+          final sortedDates = groupedByDate.keys.toList()
+            ..sort((a, b) => b.compareTo(a));
 
           return ListView.builder(
             itemCount: sortedDates.length,
@@ -106,9 +108,10 @@ class HistoryDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: Text('History for $date'),
+        title: Text('${localizations.translate('history_for')} $date'),
         backgroundColor: Colors.blue,
       ),
       body: Column(
@@ -116,12 +119,24 @@ class HistoryDetailPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
             color: Colors.grey[300],
-            child: const Row(
+            child: Row(
               children: [
-                Expanded(flex: 2, child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
-                Expanded(flex: 3, child: Text('Start', style: TextStyle(fontWeight: FontWeight.bold))),
-                Expanded(flex: 3, child: Text('End', style: TextStyle(fontWeight: FontWeight.bold))),
-                Expanded(flex: 2, child: Text('Duration', style: TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 2,
+                    child: Text(localizations.translate('action'),
+                        style: const TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 3,
+                    child: Text(localizations.translate('start'),
+                        style: const TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 3,
+                    child: Text(localizations.translate('end'),
+                        style: const TextStyle(fontWeight: FontWeight.bold))),
+                Expanded(
+                    flex: 2,
+                    child: Text(localizations.translate('duration'),
+                        style: const TextStyle(fontWeight: FontWeight.bold))),
               ],
             ),
           ),
@@ -136,9 +151,11 @@ class HistoryDetailPage extends StatelessWidget {
                 print(end);
 
                 return Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+                    border:
+                        Border(bottom: BorderSide(color: Colors.grey.shade300)),
                   ),
                   child: Row(
                     children: [

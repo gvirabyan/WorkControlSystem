@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class WeeklyHistoryPage extends StatefulWidget {
   final String userId;
@@ -23,15 +24,20 @@ class _WeeklyHistoryPageState extends State<WeeklyHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
-      appBar: AppBar(title: const Text('🗓 Weekly Work History')),
+      appBar: AppBar(
+          title: Text(
+              '🗓 ${localizations.translate('weekly_work_history')}')),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: _last7Days.length,
         itemBuilder: (context, index) {
           final day = _last7Days[index];
-          final startOfDay = Timestamp.fromDate(DateTime(day.year, day.month, day.day));
-          final endOfDay = Timestamp.fromDate(DateTime(day.year, day.month, day.day, 23, 59, 59));
+          final startOfDay =
+              Timestamp.fromDate(DateTime(day.year, day.month, day.day));
+          final endOfDay = Timestamp.fromDate(
+              DateTime(day.year, day.month, day.day, 23, 59, 59));
           final formattedDate =
               '${day.day.toString().padLeft(2, '0')}.${day.month.toString().padLeft(2, '0')}.${day.year}';
 
@@ -53,7 +59,6 @@ class _WeeklyHistoryPageState extends State<WeeklyHistoryPage> {
 
               final workEntries = snapshot.data?.docs ?? [];
 
-              // If no work entries for the day
               if (workEntries.isEmpty) {
                 return Card(
                   color: Colors.grey.shade100,
@@ -66,7 +71,8 @@ class _WeeklyHistoryPageState extends State<WeeklyHistoryPage> {
                       formattedDate,
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    subtitle: const Text('No work recorded'),
+                    subtitle:
+                        Text(localizations.translate('no_work_recorded')),
                   ),
                 );
               }
@@ -102,7 +108,9 @@ class _WeeklyHistoryPageState extends State<WeeklyHistoryPage> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Start: $start\nEnd: $end\nTask: $task',
+                                  '${localizations.translate('start')}: $start\n'
+                                  '${localizations.translate('end')}: $end\n'
+                                  '${localizations.translate('task')}: $task',
                                   style: const TextStyle(fontSize: 15),
                                 ),
                               ),

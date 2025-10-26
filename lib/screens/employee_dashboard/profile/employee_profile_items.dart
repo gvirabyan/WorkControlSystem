@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:pot/screens/employee_dashboard/profile/privacy_policy_page.dart';
 import 'package:pot/screens/employee_dashboard/profile/settings_page.dart';
 import 'package:pot/screens/employee_dashboard/profile/employee_profile_page.dart';
@@ -27,34 +28,46 @@ class _ProfileItemsState extends State<ProfileItems> {
   String? _avatarUrl; // <-- URL аватара из Firestore
   bool _isUploading = false;
 
-  late final List<Map<String, dynamic>> _menuItems;
+  late List<Map<String, dynamic>> _menuItems;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initializeMenuItems();
+  }
+
+  void _initializeMenuItems() {
+    final localizations = AppLocalizations.of(context)!;
     _menuItems = [
       {
         'icon': Icons.person_outline,
-        'title': 'Profile',
-        'page': EmployeeProfilePage(userId:widget.companyId, onLogout: () {  },),
+        'title': localizations.translate('profile'),
+        'page': EmployeeProfilePage(
+          userId: widget.companyId,
+          onLogout: () {},
+        ),
       },
       {
         'icon': Icons.lock_outline,
-        'title': 'Privacy Policy',
+        'title': localizations.translate('privacy_policy'),
         'page': const PrivacyPolicyPage(),
       },
       {
         'icon': Icons.settings_outlined,
-        'title': 'Settings',
+        'title': localizations.translate('settings'),
         'page': const SettingsPage(),
       },
       {
         'icon': Icons.help_outline,
-        'title': 'Help',
+        'title': localizations.translate('help'),
         'page': const HelpPage(),
       },
     ];
+  }
 
+  @override
+  void initState() {
+    super.initState();
     _loadCompanyData();
   }
 
@@ -67,22 +80,26 @@ class _ProfileItemsState extends State<ProfileItems> {
 
       if (doc.exists) {
         final data = doc.data()!;
-        setState(() {
-          _companyName = data['name'];
-          _avatarUrl = data['avatarUrl']; // <-- Загружаем URL, если есть
-        });
+        if (mounted) {
+          setState(() {
+            _companyName = data['name'];
+            _avatarUrl = data['avatarUrl']; // <-- Загружаем URL, если есть
+          });
+        }
       }
     } catch (e) {
-      debugPrint("Ошибка при загрузке компании: $e");
+      debugPrint(
+          "${AppLocalizations.of(context)!.translate('error_loading_company')} $e");
     }
   }
 
   Future<void> _pickAndUploadAvatar() async {
+    final localizations = AppLocalizations.of(context)!;
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked == null) return;
 
-    setState(() => _isUploading = true);
+    if (mounted) setState(() => _isUploading = true);
 
     try {
       final storageRef = FirebaseStorage.instance
@@ -98,25 +115,29 @@ class _ProfileItemsState extends State<ProfileItems> {
           .doc(widget.companyId)
           .update({'avatarUrl': url});
 
-      setState(() {
-        _avatarUrl = url;
-      });
+      if (mounted) {
+        setState(() {
+          _avatarUrl = url;
+        });
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Аватар успешно обновлён ✅")),
+        SnackBar(
+            content: Text(localizations.translate('avatar_updated_successfully'))),
       );
     } catch (e) {
-      debugPrint("Ошибка при загрузке аватара: $e");
+      debugPrint("${localizations.translate('error_uploading_avatar')} $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Ошибка: $e")),
+        SnackBar(content: Text('${localizations.translate('error')} $e')),
       );
     } finally {
-      setState(() => _isUploading = false);
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Column(
       children: [
         const SizedBox(height: 20),
@@ -132,10 +153,10 @@ class _ProfileItemsState extends State<ProfileItems> {
                       radius: 50,
                       backgroundColor: Colors.blue.shade100,
                       backgroundImage:
-                      _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
+                          _avatarUrl != null ? NetworkImage(_avatarUrl!) : null,
                       child: _avatarUrl == null
                           ? const Icon(Icons.business,
-                          size: 50, color: Colors.blue)
+                              size: 50, color: Colors.blue)
                           : null,
                     ),
                     if (_isUploading)
@@ -145,8 +166,9 @@ class _ProfileItemsState extends State<ProfileItems> {
               ),
               const SizedBox(height: 10),
               Text(
-                _companyName ?? "Loading...",
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                _companyName ?? localizations.translate('loading'),
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 30),
             ],
@@ -155,24 +177,25 @@ class _ProfileItemsState extends State<ProfileItems> {
         Expanded(
           child: _selectedPage == null
               ? ListView(
-            children: [
-              ..._menuItems.map((item) => _buildMenuItem(
-                icon: item['icon'],
-                text: item['title'],
-                onTap: () => _openPage(item['page'], item['title']),
-              )),
-              const Divider(),
-              ListTile(
-                leading:
-                const Icon(Icons.logout, color: Colors.red, size: 28),
-                title: const Text(
-                  "Logout",
-                  style: TextStyle(fontSize: 16, color: Colors.red),
-                ),
-                onTap: _logout,
-              ),
-            ],
-          )
+                  children: [
+                    ..._menuItems.map((item) => _buildMenuItem(
+                          icon: item['icon'],
+                          text: item['title'],
+                          onTap: () => _openPage(item['page'], item['title']),
+                        )),
+                    const Divider(),
+                    ListTile(
+                      leading:
+                          const Icon(Icons.logout, color: Colors.red, size: 28),
+                      title: Text(
+                        localizations.translate('logout'),
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.red),
+                      ),
+                      onTap: _logout,
+                    ),
+                  ],
+                )
               : _buildDetailPage(),
         ),
       ],
@@ -227,7 +250,7 @@ class _ProfileItemsState extends State<ProfileItems> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-            (route) => false,
+        (route) => false,
       );
     }
   }

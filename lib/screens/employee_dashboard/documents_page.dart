@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import 'package:pot/models/document_model.dart';
 import 'package:pot/services/firestore_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,63 +32,67 @@ class _DocumentsPageState extends State<DocumentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Documents'),
+        title: Text(localizations.translate('documents')),
       ),
       body: _employeeId == null
           ? const Center(child: CircularProgressIndicator())
           : StreamBuilder<List<Document>>(
-        stream: _firestoreService.getReceivedDocuments(_employeeId!),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+              stream: _firestoreService.getReceivedDocuments(_employeeId!),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+                if (snapshot.hasError) {
+                  return Center(
+                      child: Text(
+                          '${localizations.translate('error')}: ${snapshot.error}'));
+                }
 
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No documents found.'));
-          }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                      child: Text(localizations.translate('no_documents_found')));
+                }
 
-          final documents = snapshot.data!;
+                final documents = snapshot.data!;
 
-          return ListView.builder(
-            itemCount: documents.length,
-            itemBuilder: (context, index) {
-              final document = documents[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 6),
-                child: ListTile(
-                  title: Text(
-                    document.title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  subtitle: Text(document.type),
-                  trailing: Text(
-                    document.date.toLocal().toString().split(' ')[0],
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            DocumentDetailsPage(document: document),
+                return ListView.builder(
+                  itemCount: documents.length,
+                  itemBuilder: (context, index) {
+                    final document = documents[index];
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: ListTile(
+                        title: Text(
+                          document.title,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(document.type),
+                        trailing: Text(
+                          document.date.toLocal().toString().split(' ')[0],
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DocumentDetailsPage(document: document),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
-                ),
-              );
-            },
-          );
-        },
-      ),
+                );
+              },
+            ),
     );
   }
 }

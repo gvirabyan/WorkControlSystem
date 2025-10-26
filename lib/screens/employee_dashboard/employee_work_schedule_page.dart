@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class EmployeeWorkSchedulePage extends StatefulWidget {
   final String userId;
@@ -15,21 +16,23 @@ class _EmployeeWorkSchedulePageState extends State<EmployeeWorkSchedulePage> {
   final Map<String, TextEditingController> startControllers = {};
   final Map<String, TextEditingController> endControllers = {};
 
-  final List<String> daysOfWeek = const [
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday',
-    'Sunday',
-  ];
+  late List<String> daysOfWeek;
 
   bool _isLoading = true;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final localizations = AppLocalizations.of(context)!;
+    daysOfWeek = [
+      localizations.translate('monday'),
+      localizations.translate('tuesday'),
+      localizations.translate('wednesday'),
+      localizations.translate('thursday'),
+      localizations.translate('friday'),
+      localizations.translate('saturday'),
+      localizations.translate('sunday'),
+    ];
     for (var day in daysOfWeek) {
       startControllers[day] = TextEditingController();
       endControllers[day] = TextEditingController();
@@ -88,6 +91,7 @@ class _EmployeeWorkSchedulePageState extends State<EmployeeWorkSchedulePage> {
   }
 
   Future<void> _saveSchedule() async {
+    final localizations = AppLocalizations.of(context)!;
     final schedule = <String, Map<String, String>>{};
     for (var day in daysOfWeek) {
       schedule[day] = {
@@ -104,20 +108,25 @@ class _EmployeeWorkSchedulePageState extends State<EmployeeWorkSchedulePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Work schedule saved successfully')),
+          SnackBar(
+              content: Text(
+                  localizations.translate('work_schedule_saved_successfully'))),
         );
       }
     } catch (e) {
       debugPrint('Error saving schedule: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
+          SnackBar(
+              content:
+                  Text('${localizations.translate('failed_to_save')}: $e')),
         );
       }
     }
   }
 
   Widget _buildDayRow(String day) {
+    final localizations = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -134,10 +143,10 @@ class _EmployeeWorkSchedulePageState extends State<EmployeeWorkSchedulePage> {
             child: TextField(
               controller: startControllers[day],
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Start',
+              decoration: InputDecoration(
+                labelText: localizations.translate('start'),
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
               onTap: () => _selectTime(context, startControllers[day]!),
             ),
@@ -148,10 +157,10 @@ class _EmployeeWorkSchedulePageState extends State<EmployeeWorkSchedulePage> {
             child: TextField(
               controller: endControllers[day],
               readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'End',
+              decoration: InputDecoration(
+                labelText: localizations.translate('end'),
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
               onTap: () => _selectTime(context, endControllers[day]!),
             ),
@@ -163,47 +172,48 @@ class _EmployeeWorkSchedulePageState extends State<EmployeeWorkSchedulePage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Work Schedule'),
+        title: Text(localizations.translate('work_schedule')),
         backgroundColor: Colors.blue.shade700,
         foregroundColor: Colors.white,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Set work hours for each day',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    localizations.translate('set_work_hours_for_each_day'),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ...daysOfWeek.map(_buildDayRow).toList(),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: _saveSchedule,
+                    icon: const Icon(Icons.save),
+                    label: Text(localizations.translate('save_schedule')),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            ...daysOfWeek.map(_buildDayRow).toList(),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _saveSchedule,
-              icon: const Icon(Icons.save),
-              label: const Text('Save Schedule'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade700,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

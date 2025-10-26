@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class VacationRequestForm extends StatefulWidget {
   final String userId;
-  // NOTE: companyPromoCode is removed from the constructor and will be fetched internally.
 
   const VacationRequestForm({
     super.key,
@@ -21,8 +21,8 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
   DateTime? _endDate;
   final TextEditingController _reasonController = TextEditingController();
 
-  String? _companyPromoCode; // State to hold the fetched promo code
-  bool _isLoadingData = true; // State to track data fetching
+  String? _companyPromoCode;
+  bool _isLoadingData = true;
   bool _isSending = false;
 
   @override
@@ -31,8 +31,8 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
     _fetchCompanyPromoCode();
   }
 
-  // --- New function to fetch promoCode from Firestore ---
   Future<void> _fetchCompanyPromoCode() async {
+    final localizations = AppLocalizations.of(context)!;
     try {
       final docSnapshot = await FirebaseFirestore.instance
           .collection('users')
@@ -41,7 +41,6 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
 
       if (docSnapshot.exists) {
         setState(() {
-          // Assuming the promo code is stored directly on the user's document
           _companyPromoCode = docSnapshot.data()?['promoCode'] as String?;
           _isLoadingData = false;
         });
@@ -51,7 +50,8 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
         });
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('User data not found.')),
+            SnackBar(
+                content: Text(localizations.translate('user_data_not_found'))),
           );
         }
       }
@@ -61,13 +61,16 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error fetching company code: $e')),
+          SnackBar(
+              content: Text(
+                  '${localizations.translate('error_fetching_company_code')}: $e')),
         );
       }
     }
   }
 
   Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final localizations = AppLocalizations.of(context)!;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -82,10 +85,11 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
             _endDate = null;
           }
         } else {
-          // End date cannot be earlier than the start date.
           if (_startDate != null && picked.isBefore(_startDate!)) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('End date cannot be earlier than the start date.')),
+              SnackBar(
+                  content: Text(localizations
+                      .translate('end_date_cannot_be_earlier'))),
             );
             return;
           }
@@ -96,18 +100,22 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
   }
 
   Future<void> _submitRequest() async {
+    final localizations = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       if (_startDate == null || _endDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select both start and end dates.')),
+          SnackBar(
+              content: Text(localizations
+                  .translate('please_select_both_start_and_end_dates'))),
         );
         return;
       }
 
-      // Stop if promo code is missing
       if (_companyPromoCode == null || _companyPromoCode!.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Company code is missing. Cannot submit request.')),
+          SnackBar(
+              content: Text(localizations
+                  .translate('company_code_is_missing'))),
         );
         return;
       }
@@ -117,31 +125,30 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
       });
 
       try {
-        // --- 1. Save to employee's subcollection for individual status tracking ---
-        await FirebaseFirestore.instance
-            .collection('vacations')
-            .add({
+        await FirebaseFirestore.instance.collection('vacations').add({
           'userId': widget.userId,
-          'promoCode': _companyPromoCode!, // Use the fetched promo code
-          // NOTE: If 'name' is available, it should be fetched and added here.
+          'promoCode': _companyPromoCode!,
           'startDate': Timestamp.fromDate(_startDate!),
           'endDate': Timestamp.fromDate(_endDate!),
           'reason': _reasonController.text.trim(),
-          'status': 'pending', // Key status for Admin approval
+          'status': 'pending',
           'createdAt': FieldValue.serverTimestamp(),
         });
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Vacation request sent successfully! Awaiting approval.')),
+            SnackBar(
+                content: Text(localizations
+                    .translate('vacation_request_sent_successfully'))),
           );
-          // Navigate back after submission
           Navigator.of(context).pop();
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error sending request: $e')),
+            SnackBar(
+                content: Text(
+                    '${localizations.translate('error_sending_request')}: $e')),
           );
         }
       } finally {
@@ -160,14 +167,17 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
     super.dispose();
   }
 
-  // Date selection widget
   Widget _buildDateSelectionTile(
       BuildContext context, String label, DateTime? date, VoidCallback onTap) {
+    final localizations = AppLocalizations.of(context)!;
     return ListTile(
       title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
       subtitle: Text(
-        date == null ? 'Tap to select date' : DateFormat('dd.MM.yyyy').format(date),
-        style: TextStyle(fontSize: 16, color: date == null ? Colors.grey : Colors.black),
+        date == null
+            ? localizations.translate('tap_to_select_date')
+            : DateFormat('dd.MM.yyyy').format(date),
+        style: TextStyle(
+            fontSize: 16, color: date == null ? Colors.grey : Colors.black),
       ),
       trailing: const Icon(Icons.calendar_month),
       onTap: onTap,
@@ -181,19 +191,22 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     if (_isLoadingData) {
       return Scaffold(
-        appBar: AppBar(title: const Text('New Vacation Request'), backgroundColor: Colors.teal),
+        appBar: AppBar(
+            title: Text(localizations.translate('new_vacation_request')),
+            backgroundColor: Colors.teal),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
-    // Check if promo code was successfully fetched
-    final promoCodeDisplay = _companyPromoCode ?? 'Not available';
+    final promoCodeDisplay =
+        _companyPromoCode ?? localizations.translate('not_available');
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('New Vacation Request'), // Translated
+        title: Text(localizations.translate('new_vacation_request')),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
       ),
@@ -204,70 +217,67 @@ class _VacationRequestFormState extends State<VacationRequestForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              // Displaying Promo Code for reference
               Card(
                 margin: const EdgeInsets.only(bottom: 20),
                 color: Colors.teal.shade50,
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    'Company Code: $promoCodeDisplay',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.teal.shade800),
+                    '${localizations.translate('company_code')}: $promoCodeDisplay',
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal.shade800),
                   ),
                 ),
               ),
-
-              // Start Date
               _buildDateSelectionTile(
                 context,
-                'Start Date', // Translated
+                localizations.translate('start_date'),
                 _startDate,
-                    () => _selectDate(context, true),
+                () => _selectDate(context, true),
               ),
               const SizedBox(height: 15),
-
-              // End Date
               _buildDateSelectionTile(
                 context,
-                'End Date', // Translated
+                localizations.translate('end_date'),
                 _endDate,
-                    () => _selectDate(context, false),
+                () => _selectDate(context, false),
               ),
               const SizedBox(height: 25),
-
-              // Reason
               TextFormField(
                 controller: _reasonController,
-                decoration: const InputDecoration(
-                  labelText: 'Reason (Comment)', // Translated
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.info_outline),
+                decoration: InputDecoration(
+                  labelText: localizations.translate('reason_comment'),
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.info_outline),
                 ),
                 maxLines: 3,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please specify a reason.'; // Translated
+                    return localizations.translate('please_specify_a_reason');
                   }
                   return null;
                 },
               ),
               const SizedBox(height: 30),
-
-              // Submission Button
               ElevatedButton(
-                onPressed: _isSending || _companyPromoCode == null ? null : _submitRequest,
+                onPressed: _isSending || _companyPromoCode == null
+                    ? null
+                    : _submitRequest,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size.fromHeight(55),
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: _isSending
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                  'Send Request', // Translated
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                    : Text(
+                        localizations.translate('send_request'),
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
               ),
             ],
           ),

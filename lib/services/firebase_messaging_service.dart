@@ -33,7 +33,7 @@ class FirebaseMessagingService {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'default_channel', // id канала
       'General Notifications', // имя
-      description: 'Основной канал уведомлений',
+      description: 'General notification channel',
       importance: Importance.high,
     );
 
@@ -71,7 +71,7 @@ class FirebaseMessagingService {
 
     await _flutterLocalNotificationsPlugin.show(
       message.hashCode,
-      message.notification?.title ?? 'Новое сообщение',
+      message.notification?.title ?? 'New message',
       message.notification?.body ?? '',
       platformChannelSpecifics,
       payload: message.data.toString(),

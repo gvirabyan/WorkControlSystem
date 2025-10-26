@@ -41,11 +41,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else {
         final promoCode = _promoCodeController.text.trim();
         if (promoCode.isEmpty) {
-          throw Exception("Promo code is required for employee");
+          throw Exception(AppLocalizations.of(context)!
+              .translate('promo_code_is_required_for_employee'));
         }
 
         final exists = await auth.promoCodeExists(promoCode);
-        if (!exists) throw Exception("Invalid promo code");
+        if (!exists) {
+          throw Exception(
+              AppLocalizations.of(context)!.translate('invalid_promo_code'));
+        }
 
         await auth.register(
           _emailOrPhoneController.text,
@@ -62,7 +66,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(
+            content: Text(
+                '${AppLocalizations.of(context)!.translate('error')} $e')),
       );
     } finally {
       setState(() => _isLoading = false);

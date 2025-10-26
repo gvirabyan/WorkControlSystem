@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pot/l10n/app_localizations.dart';
 
 class DailyReportPage extends StatelessWidget {
   final String userId;
@@ -7,14 +8,19 @@ class DailyReportPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     final now = DateTime.now();
-    final startOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
-    final endOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
+    final startOfDay =
+        Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+    final endOfDay =
+        Timestamp.fromDate(DateTime(now.year, now.month, now.day, 23, 59, 59));
     final formattedDate =
         '${now.day.toString().padLeft(2, '0')}.${now.month.toString().padLeft(2, '0')}.${now.year}';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('📅 Today\'s Report')),
+      appBar: AppBar(
+          title: Text(
+              '📅 ${localizations.translate('todays_report')}')),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance
             .collection('employee_action_history')
@@ -33,7 +39,7 @@ class DailyReportPage extends StatelessWidget {
           if (workEntries.isEmpty) {
             return Center(
               child: Text(
-                'No work recorded for $formattedDate',
+                '${localizations.translate('no_work_recorded_for')} $formattedDate',
                 style: const TextStyle(fontSize: 16),
               ),
             );
@@ -73,7 +79,9 @@ class DailyReportPage extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  'Start: $start\nEnd: $end\nTask: $task',
+                                  '${localizations.translate('start')}: $start\n'
+                                  '${localizations.translate('end')}: $end\n'
+                                  '${localizations.translate('task')}: $task',
                                   style: const TextStyle(fontSize: 15),
                                 ),
                               ),

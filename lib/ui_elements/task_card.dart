@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pot/l10n/app_localizations.dart';
 import '../models/task_model.dart';
 
 class TaskCard extends StatelessWidget {
@@ -8,6 +9,7 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -24,11 +26,12 @@ class TaskCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(task.description),
             const SizedBox(height: 4),
-            Text('Status: ${task.status}'),
+            Text('${localizations.translate('status')}: ${task.status}'),
             const SizedBox(height: 4),
-            Text('Start: ${task.startDate}'),
-            Text('End: ${task.endDate}'),
-            Text('Due: ${task.dueDate}'),
+            Text(
+                '${localizations.translate('start_date')}: ${task.startDate}'),
+            Text('${localizations.translate('end_date')}: ${task.endDate}'),
+            Text('${localizations.translate('due_date')}: ${task.dueDate}'),
           ],
         ),
       ),
