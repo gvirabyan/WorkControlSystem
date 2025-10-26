@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../models/task_model.dart' as model;
 
 class AllTasksPage extends StatefulWidget {
@@ -15,8 +16,122 @@ class AllTasksPage extends StatefulWidget {
 class _AllTasksPageState extends State<AllTasksPage> {
   bool showCompleted = false;
 
-  void _showAddTaskDialog() {
-    // Твоя логика добавления задачи
+
+
+  Future<void> _showAddTaskDialog() async {
+    final titleController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final statusController = TextEditingController();
+    final startDateController = TextEditingController();
+    final endDateController = TextEditingController();
+    final dueDateController = TextEditingController();
+
+    Future<void> _selectDate(BuildContext context, TextEditingController controller) async {
+      final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100),
+      );
+      if (picked != null) {
+        controller.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+      }
+    }
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text(AppLocalizations.of(context)!.translate('add_task')),
+        content: SingleChildScrollView(
+          child: Column(
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.translate('title'),
+                ),
+              ),
+              TextField(
+                controller: descriptionController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.translate('description'),
+                ),
+              ),
+              TextField(
+                controller: statusController,
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.translate('status'),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _selectDate(context, startDateController),
+                child: AbsorbPointer(
+                  child: TextField(
+                    controller: startDateController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.translate('start_date'),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _selectDate(context, endDateController),
+                child: AbsorbPointer(
+                  child: TextField(
+                    controller: endDateController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.translate('end_date'),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _selectDate(context, dueDateController),
+                child: AbsorbPointer(
+                  child: TextField(
+                    controller: dueDateController,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.translate('due_date'),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context)!.translate('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final task = model.Task(
+                id: '',
+                title: titleController.text.isEmpty ? '-' : titleController.text,
+                description: descriptionController.text.isEmpty ? '-' : descriptionController.text,
+                status: statusController.text.isEmpty ? '-' : statusController.text,
+                startDate: startDateController.text.isEmpty ? '-' : startDateController.text,
+                endDate: endDateController.text.isEmpty ? '-' : endDateController.text,
+                dueDate: dueDateController.text.isEmpty ? '-' : dueDateController.text,
+              );
+
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(widget.userId)
+                  .collection('tasks')
+                  .add(task.toMap());
+
+              Navigator.pop(context);
+            },
+            child: Text(AppLocalizations.of(context)!.translate('add')),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

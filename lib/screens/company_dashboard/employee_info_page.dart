@@ -10,6 +10,7 @@ import 'package:pot/ui_elements/task_card.dart';
 import 'package:pot/models/task_model.dart' as model;
 
 import '../all_tasks_page.dart';
+import '../employee_dashboard/employee_work_schedule_page.dart';
 import 'DailyReportPage.dart';
 import 'VacationPage.dart';
 import 'WeeklyHistoryPage.dart';
@@ -65,6 +66,7 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     'workSchedule',
     'salary',
   ];
+
 
   Future<void> _saveChanges() async {
     final Map<String, dynamic> updatedData = {};
@@ -150,6 +152,12 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     }
   }
 
+  void _showWorkScheduleDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => EmployeeWorkSchedulePage(userId: widget.userId,),
+    );
+  }
   Future<void> _previewContract() async {
     if (_contractUrl == null) return;
     final uri = Uri.parse(_contractUrl!);
@@ -202,103 +210,7 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     );
   }
 
-  Future<void> _showAddTaskDialog() async {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final statusController = TextEditingController();
-    final startDateController = TextEditingController();
-    final endDateController = TextEditingController();
-    final dueDateController = TextEditingController();
 
-    await showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.translate('add_task')),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                    labelText:
-                        AppLocalizations.of(context)!.translate('title')),
-              ),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!
-                        .translate('description')),
-              ),
-              TextField(
-                controller: statusController,
-                decoration: InputDecoration(
-                    labelText:
-                        AppLocalizations.of(context)!.translate('status')),
-              ),
-              TextField(
-                controller: startDateController,
-                decoration: InputDecoration(
-                    labelText:
-                        AppLocalizations.of(context)!.translate('start_date')),
-              ),
-              TextField(
-                controller: endDateController,
-                decoration: InputDecoration(
-                    labelText:
-                        AppLocalizations.of(context)!.translate('end_date')),
-              ),
-              TextField(
-                controller: dueDateController,
-                decoration: InputDecoration(
-                    labelText:
-                        AppLocalizations.of(context)!.translate('due_date')),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context)!.translate('cancel')),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final task = model.Task(
-                id: '',
-                title: titleController.text.isEmpty
-                    ? '-'
-                    : titleController.text,
-                description: descriptionController.text.isEmpty
-                    ? '-'
-                    : descriptionController.text,
-                status: statusController.text.isEmpty
-                    ? '-'
-                    : statusController.text,
-                startDate: startDateController.text.isEmpty
-                    ? '-'
-                    : startDateController.text,
-                endDate: endDateController.text.isEmpty
-                    ? '-'
-                    : endDateController.text,
-                dueDate: dueDateController.text.isEmpty
-                    ? '-'
-                    : dueDateController.text,
-              );
-
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(widget.userId)
-                  .collection('tasks')
-                  .add(task.toMap());
-
-              Navigator.pop(context);
-            },
-            child: Text(AppLocalizations.of(context)!.translate('add')),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -433,6 +345,24 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    const SizedBox(height: 12),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: ElevatedButton.icon(
+                        onPressed: _showWorkScheduleDialog,
+                        icon: const Icon(Icons.access_time),
+                        label: const Text('Work Schedule'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 12),
 
                     // Tasks кнопка

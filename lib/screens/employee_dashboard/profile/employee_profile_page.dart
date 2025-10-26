@@ -5,6 +5,7 @@ import 'package:pot/models/task_model.dart' as model;
 import '../../all_tasks_page.dart';
 import '../../company_dashboard/DailyReportPage.dart';
 import '../../company_dashboard/WeeklyHistoryPage.dart';
+import '../employee_work_schedule_page.dart';
 import '../request_vacation_page.dart';
 import 'employee_notes_page.dart';
 
@@ -63,7 +64,6 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
     );
   }
 
-  // --- НОВАЯ ФУНКЦИЯ: Обработка нажатия кнопки Отпуск ---
   void _goToVacationPage() {
     Navigator.push(
       context,
@@ -72,13 +72,18 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
       ),
     );
   }
-  // --------------------------------------------------------
+
+  void _showWorkScheduleDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => EmployeeWorkSchedulePage(userId: widget.userId),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.blue.shade50,
-
       body: FutureBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         future: _userDataFuture,
         builder: (context, snapshot) {
@@ -98,7 +103,7 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // ---- Фото и имя ----
+                // ---- Photo and Name ----
                 Center(
                   child: Column(
                     children: [
@@ -119,15 +124,13 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                 ),
 
                 const SizedBox(height: 24),
-                // ---- Личные данные ----
+                // ---- Personal Information ----
                 ExpansionTile(
                   title: const Text(
                     '👤 Personal Information',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  initiallyExpanded: false, // по умолчанию свернуто
-                  children:
-                  _personalFields
+                  children: _personalFields
                       .where((f) => userData.containsKey(f))
                       .map(
                         (f) => Padding(
@@ -139,15 +142,13 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                 ),
 
                 const SizedBox(height: 30),
-                // ---- Рабочие данные ----
+                // ---- Work Information ----
                 ExpansionTile(
                   title: const Text(
                     '💼 Work Information',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  initiallyExpanded: false, // по умолчанию свернуто
-                  children:
-                  _workFields.map((f) {
+                  children: _workFields.map((f) {
                     if (f == 'workSchedule') {
                       final scheduleText =
                       (userData[f]?.toString().isNotEmpty ?? false)
@@ -155,11 +156,7 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                           : '';
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: _buildField(
-                          f,
-                          scheduleText,
-                          //hintText: 'Mon-Fri 09:00-18:00',
-                        ),
+                        child: _buildField(f, scheduleText),
                       );
                     } else if (f == 'salary') {
                       final salaryText =
@@ -182,6 +179,8 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                 ),
 
                 const SizedBox(height: 30),
+
+                // ---- Vacation Button ----
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: ElevatedButton.icon(
@@ -198,7 +197,26 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+
+                // ---- Work Schedule Button ----
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: ElevatedButton.icon(
+                    onPressed: _showWorkScheduleDialog,
+                    icon: const Icon(Icons.access_time),
+                    label: const Text('Work Schedule'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // ---- Notes ----
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: ElevatedButton.icon(
@@ -227,29 +245,32 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
 
                 const SizedBox(height: 30),
 
-               ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AllTasksPage(userId: widget.userId),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                // ---- Tasks Button ----
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AllTasksPage(userId: widget.userId),
                       ),
-                    ),
-                    child: const Text(
-                      '🗂 Tasks',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue.shade700,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
+                  child: const Text(
+                    '🗂 Tasks',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
 
+                // ---- Weekly History ----
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -260,15 +281,19 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                     );
                   },
                   icon: const Icon(Icons.calendar_month, color: Colors.white),
-                  label: const Text('History of last week', style: TextStyle(color: Colors.white)),
+                  label: const Text('History of last week',
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade700,
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
+
                 const SizedBox(height: 20),
 
+                // ---- Daily Report ----
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -279,18 +304,17 @@ class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
                     );
                   },
                   icon: const Icon(Icons.calendar_month, color: Colors.white),
-                  label: const Text('Daily Report', style: TextStyle(color: Colors.white)),
+                  label: const Text('Daily Report',
+                      style: TextStyle(color: Colors.white)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue.shade700,
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                 ),
 
-
                 const SizedBox(height: 40),
-
-
               ],
             ),
           );
