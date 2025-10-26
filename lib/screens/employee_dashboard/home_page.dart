@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   final String userId;
@@ -27,7 +28,8 @@ class _HomePageState extends State<HomePage> {
   String _contact = '';
   String _promoCode = '';
 
-  final TextEditingController _taskDescriptionController = TextEditingController();
+  final TextEditingController _taskDescriptionController =
+  TextEditingController();
   final TextEditingController _breakReasonController = TextEditingController();
 
   @override
@@ -64,11 +66,10 @@ class _HomePageState extends State<HomePage> {
     final data = doc.data()!;
     final status = data['currentStatus'] ?? 'Not Working';
 
-    // Проверяем наличие незавершённого действия
     final query = await historyCollection
         .where('userId', isEqualTo: widget.userId)
         .where('datetimeEnd', isEqualTo: null)
-        .limit(1) // Ограничиваем до одного документа для производительности
+        .limit(1)
         .get();
 
     if (query.docs.isNotEmpty) {
@@ -76,19 +77,6 @@ class _HomePageState extends State<HomePage> {
       _currentActionDoc = currentAction.reference;
       final desc = currentAction.data()['description'] ?? '';
       _taskDescriptionController.text = desc;
-
-      // --- Восстановление времени ---
-      final startTimeStamp = currentAction.data()['datetimeStart'] as Timestamp?;
-      if (startTimeStamp != null) {
-        final startTime = startTimeStamp.toDate();
-        final now = DateTime.now();
-        final elapsedSeconds = now.difference(startTime).inSeconds;
-
-        setState(() {
-          _totalSeconds = elapsedSeconds > 0 ? elapsedSeconds : 0;
-        });
-      }
-      // --------------------------
     }
 
     setState(() {
@@ -96,12 +84,25 @@ class _HomePageState extends State<HomePage> {
       _isOnBreak = status == 'On Break';
     });
 
-    if (_isWorking && !_isOnBreak) {
-      _startTimer(); // Таймер запустится с восстановленным _totalSeconds
+    // 🔹 Проверяем сохранённое время старта из SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final startTimeMillis = prefs.getInt('startTime');
+
+    if (_isWorking && startTimeMillis != null) {
+      final startTime = DateTime.fromMillisecondsSinceEpoch(startTimeMillis);
+      final now = DateTime.now();
+      final elapsedSeconds = now.difference(startTime).inSeconds;
+
+      setState(() {
+        _totalSeconds = elapsedSeconds > 0 ? elapsedSeconds : 0;
+      });
+
+      _startTimer();
     }
   }
 
   void _startTimer() {
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         _totalSeconds++;
@@ -120,12 +121,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _startAction(String action, {String? taskTitle}) async {
-    // Завершаем предыдущее действие, если было
     if (_currentActionDoc != null) {
-      await _currentActionDoc!.update({'datetimeEnd': FieldValue.serverTimestamp()});
+      await _currentActionDoc!
+          .update({'datetimeEnd': FieldValue.serverTimestamp()});
     }
 
-    // Создаём новую запись в истории
     final newDoc = await historyCollection.add({
       'userId': widget.userId,
       'name': _name,
@@ -140,22 +140,34 @@ class _HomePageState extends State<HomePage> {
 
     _currentActionDoc = newDoc;
 
-    // Обновляем статус и текущую задачу в users
     await usersCollection.doc(widget.userId).update({
       'currentStatus': action,
       if (taskTitle != null) 'task': taskTitle,
     });
+
+    // 💾 Сохраняем/удаляем время старта
+    final prefs = await SharedPreferences.getInstance();
+    if (action == 'Working') {
+      await prefs.setInt('startTime', DateTime.now().millisecondsSinceEpoch);
+    } else {
+      await prefs.remove('startTime');
+    }
   }
 
   Future<void> _endAction() async {
     if (_currentActionDoc != null) {
-      await _currentActionDoc!.update({'datetimeEnd': FieldValue.serverTimestamp()});
+      await _currentActionDoc!
+          .update({'datetimeEnd': FieldValue.serverTimestamp()});
       _currentActionDoc = null;
     }
     await usersCollection.doc(widget.userId).update({
       'currentStatus': 'Not Working',
       'task': null,
     });
+
+    // ❌ Удаляем сохранённое время старта
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('startTime');
   }
 
   Future<void> _saveTaskDescription() async {
@@ -171,12 +183,11 @@ class _HomePageState extends State<HomePage> {
   Future<void> _showTaskSelectionDialog() async {
     String? selectedTask;
 
-    final snapshot = await usersCollection
-        .doc(widget.userId)
-        .collection('tasks')
-        .get();
+    final snapshot =
+    await usersCollection.doc(widget.userId).collection('tasks').get();
 
-    final taskTitles = snapshot.docs.map((doc) => doc['title'] as String).toList();
+    final taskTitles =
+    snapshot.docs.map((doc) => doc['title'] as String).toList();
 
     if (taskTitles.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -277,7 +288,8 @@ class _HomePageState extends State<HomePage> {
           title: const Text('Break Reason'),
           content: TextField(
             controller: _breakReasonController,
-            decoration: const InputDecoration(hintText: 'Enter reason for break'),
+            decoration:
+            const InputDecoration(hintText: 'Enter reason for break'),
           ),
           actions: [
             TextButton(
@@ -314,7 +326,9 @@ class _HomePageState extends State<HomePage> {
     int hours = totalSeconds ~/ 3600;
     int minutes = (totalSeconds % 3600) ~/ 60;
     int seconds = totalSeconds % 60;
-    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    return '${hours.toString().padLeft(2, '0')}:'
+        '${minutes.toString().padLeft(2, '0')}:'
+        '${seconds.toString().padLeft(2, '0')}';
   }
 
   @override
@@ -328,7 +342,8 @@ class _HomePageState extends State<HomePage> {
               _isWorking
                   ? (_isOnBreak ? 'On Break' : 'Currently Working')
                   : 'Not Working',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style:
+              const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             if (_isWorking)
@@ -342,7 +357,6 @@ class _HomePageState extends State<HomePage> {
               ),
             const SizedBox(height: 20),
 
-            // Поле для описания задачи
             if (_isWorking)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -372,7 +386,8 @@ class _HomePageState extends State<HomePage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
                 child: const Text('Start Work'),
               )
@@ -385,7 +400,8 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15),
                     ),
                     child: const Text('Finish Work'),
                   ),
@@ -395,7 +411,8 @@ class _HomePageState extends State<HomePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 30, vertical: 15),
                     ),
                     child: const Text('Break'),
                   ),
@@ -407,7 +424,8 @@ class _HomePageState extends State<HomePage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                 ),
                 child: const Text('Continue Work'),
               ),
