@@ -52,9 +52,11 @@ class _EmployeeInfoPageState extends State<EmployeeInfoPage> {
     'currentStatus',
     'emailOrPhone',
     'workedHours',
+    'age',
+    'address',
   ];
 
-  final _personalFields = ['emailOrPhone', 'contact'];
+  final _personalFields = ['emailOrPhone', 'contact', 'age', 'address'];
   final _workFields = [
     'currentStatus',
     'position',

@@ -134,15 +134,15 @@ class CompanyEmployeesPage extends StatelessWidget {
                     .translate('company_employees')),
                 actions: [
                   // --- КНОПКА, ВЫЗЫВАЮЩАЯ CLOUD FUNCTION ---
-                  IconButton(
-                    icon: const Icon(Icons.send),
-                    tooltip: AppLocalizations.of(context)!
-                        .translate('send_notifications_to_employees'),
-                    onPressed: users.isEmpty
-                        ? null
-                        : () => _sendNotificationToEmployees(
-                            context, companyPromoCode),
-                  ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.send),
+                  //   tooltip: AppLocalizations.of(context)!
+                  //       .translate('send_notifications_to_employees'),
+                  //   onPressed: users.isEmpty
+                  //       ? null
+                  //       : () => _sendNotificationToEmployees(
+                  //           context, companyPromoCode),
+                  // ),
                   // --- КОНЕЦ КНОПКИ ---
                 ],
               ),

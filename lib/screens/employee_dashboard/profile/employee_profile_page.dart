@@ -25,9 +25,10 @@ class EmployeeProfilePage extends StatefulWidget {
 
 class _EmployeeProfilePageState extends State<EmployeeProfilePage> {
   late Future<DocumentSnapshot<Map<String, dynamic>>> _userDataFuture;
+  final Map<String, TextEditingController> _controllers = {};
 
-  final _personalFields = ['emailOrPhone', 'contact'];
-  final _workFields = [
+
+  final _personalFields = ['emailOrPhone', 'contact', 'age', 'address'];  final _workFields = [
     'currentStatus',
     'position',
     'startDate',
