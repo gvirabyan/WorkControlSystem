@@ -83,6 +83,9 @@ class _TariffPageState extends State<PlansPage> {
                 final pkg = packages[index];
                 final isSelected = selectedPackageId == pkg.id;
 
+                // Разрешаем выбор только Free
+                final isSelectable = pkg.id == 'free';
+
                 return AnimatedContainer(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
@@ -106,14 +109,13 @@ class _TariffPageState extends State<PlansPage> {
                   child: ListTile(
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
-                    onTap: () {
+                    onTap: isSelectable
+                        ? () {
                       setState(() {
                         selectedPackageId = pkg.id;
-                        if (!pkg.isUltimate) {
-                          ultimateEmployees = 16;
-                        }
                       });
-                    },
+                    }
+                        : null, // остальные планы не кликабельны
                     leading: _buildLeading(pkg, isSelected),
                     title: Text(
                       pkg.title,
@@ -134,42 +136,25 @@ class _TariffPageState extends State<PlansPage> {
                         Text(
                           pkg.isUltimate
                               ? (isSelected
-                                  ? AppLocalizations.of(context)!
-                                      .translate('custom_pricing')
-                                  : AppLocalizations.of(context)!
-                                      .translate('over_15_users_calculate'))
+                              ? AppLocalizations.of(context)!
+                              .translate('custom_pricing')
+                              : AppLocalizations.of(context)!
+                              .translate('over_15_users_calculate'))
                               : '${pkg.priceText} • ${pkg.usersText}',
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(
+                              color: isSelectable ? Colors.grey[700] : Colors.grey[400]),
                         ),
-                        if (pkg.isUltimate && isSelected) ...[
-                          const SizedBox(height: 12),
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              Text(AppLocalizations.of(context)!
-                                  .translate('how_many_employees')),
-                              _buildEmployeesInput(),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${AppLocalizations.of(context)!.translate('calculated_price')}${_formatPrice(_calculateUltimatePrice())}',
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
                       ],
                     ),
                     trailing: Checkbox(
                       value: isSelected,
-                      onChanged: (_) {
+                      onChanged: isSelectable
+                          ? (_) {
                         setState(() {
                           selectedPackageId = pkg.id;
-                          if (!pkg.isUltimate) ultimateEmployees = 16;
                         });
-                      },
+                      }
+                          : null, // остальные чекбоксы неактивны
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4)),
                     ),

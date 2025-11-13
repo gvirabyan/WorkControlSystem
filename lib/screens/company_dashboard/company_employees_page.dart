@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart'; // <--- НОВЫЙ ИМПОРТ
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:pot/l10n/app_localizations.dart';
+import 'package:pot/screens/company_dashboard/reports_page.dart';
 
 import '../../models/UserModel.dart';
 import '../../ui_elements/user_item.dart';
@@ -13,14 +14,13 @@ class CompanyEmployeesPage extends StatelessWidget {
 
   Future<String?> _getCompanyPromoCode() async {
     final doc =
-        await FirebaseFirestore.instance.collection('users').doc(companyId).get();
+    await FirebaseFirestore.instance.collection('users').doc(companyId).get();
     if (doc.exists) {
       return doc.data()?['promoCode'] as String?;
     }
     return null;
   }
 
-  // --- ОБНОВЛЕННАЯ ФУНКЦИЯ: Отправка уведомлений ---
   Future<void> _sendNotificationToEmployees(
       BuildContext context, String companyPromoCode) async {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -41,7 +41,6 @@ class CompanyEmployeesPage extends StatelessWidget {
             .translate('please_check_the_latest_news_in_the_app'),
       });
 
-      // 3. Обрабатываем результат
       final resultData = results.data as Map<String, dynamic>;
       final isSuccess = resultData['success'] as bool? ?? false;
       final message = resultData['message'] as String? ?? 'Unknown error';
@@ -60,7 +59,6 @@ class CompanyEmployeesPage extends StatelessWidget {
         );
       }
     } on FirebaseFunctionsException catch (e) {
-      // Обработка ошибок Cloud Function (например, 'invalid-argument')
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -68,7 +66,6 @@ class CompanyEmployeesPage extends StatelessWidget {
       );
       print('Cloud Function Error: ${e.code} / ${e.message}');
     } catch (e) {
-      // Общая ошибка
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(
@@ -76,7 +73,6 @@ class CompanyEmployeesPage extends StatelessWidget {
       );
     }
   }
-  // --- КОНЕЦ ОБНОВЛЕННОЙ ФУНКЦИИ ---
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +91,7 @@ class CompanyEmployeesPage extends StatelessWidget {
           return Scaffold(
             appBar: AppBar(
                 title:
-                    Text(AppLocalizations.of(context)!.translate('employees'))),
+                Text(AppLocalizations.of(context)!.translate('employees'))),
             body: Center(
                 child: Text(AppLocalizations.of(context)!
                     .translate('company_promo_code_not_found'))),
@@ -103,14 +99,12 @@ class CompanyEmployeesPage extends StatelessWidget {
         }
 
         return StreamBuilder<QuerySnapshot>(
-          // ... (логика StreamBuilder остается прежней)
           stream: FirebaseFirestore.instance
               .collection('users')
               .where('type', isEqualTo: 'employee')
               .where('promoCode', isEqualTo: companyPromoCode)
               .snapshots(),
           builder: (context, snapshot) {
-            // ... (логика загрузки и пустого состояния)
             if (snapshot.connectionState == ConnectionState.waiting) {
               return Scaffold(
                 appBar: AppBar(
@@ -121,11 +115,11 @@ class CompanyEmployeesPage extends StatelessWidget {
             }
 
             final users = snapshot.data?.docs
-                    .map((doc) => UserModel.fromMap(
-                          doc.id,
-                          doc.data() as Map<String, dynamic>,
-                        ))
-                    .toList() ??
+                .map((doc) => UserModel.fromMap(
+              doc.id,
+              doc.data() as Map<String, dynamic>,
+            ))
+                .toList() ??
                 [];
 
             return Scaffold(
@@ -133,7 +127,23 @@ class CompanyEmployeesPage extends StatelessWidget {
                 title: Text(AppLocalizations.of(context)!
                     .translate('company_employees')),
                 actions: [
-                  // --- КНОПКА, ВЫЗЫВАЮЩАЯ CLOUD FUNCTION ---
+                  // Reports button
+                  IconButton(
+                    icon: const Icon(Icons.analytics_outlined),
+                    tooltip: 'Reports',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReportsPage(
+                            companyId: companyId,
+                            companyPromoCode: companyPromoCode,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Notification button (commented out)
                   // IconButton(
                   //   icon: const Icon(Icons.send),
                   //   tooltip: AppLocalizations.of(context)!
@@ -143,23 +153,22 @@ class CompanyEmployeesPage extends StatelessWidget {
                   //       : () => _sendNotificationToEmployees(
                   //           context, companyPromoCode),
                   // ),
-                  // --- КОНЕЦ КНОПКИ ---
                 ],
               ),
               body: users.isEmpty
                   ? Center(
-                      child: Text(AppLocalizations.of(context)!
-                          .translate('no_staff_found')))
+                  child: Text(AppLocalizations.of(context)!
+                      .translate('no_staff_found')))
                   : ListView.builder(
-                      padding: const EdgeInsets.all(8),
-                      itemCount: users.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: UserItem(user: users[index]),
-                        );
-                      },
-                    ),
+                padding: const EdgeInsets.all(8),
+                itemCount: users.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: UserItem(user: users[index]),
+                  );
+                },
+              ),
             );
           },
         );
@@ -167,3 +176,5 @@ class CompanyEmployeesPage extends StatelessWidget {
     );
   }
 }
+
+// Placeholder Reports Page
