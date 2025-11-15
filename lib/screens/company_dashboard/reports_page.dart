@@ -94,8 +94,8 @@ class _ReportsPageState extends State<ReportsPage> {
       final snapshot = await FirebaseFirestore.instance
           .collection('employee_action_history')
           .where('userId', isEqualTo: selectedEmployeeId)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
+          .where('datetimeStart', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
+          .where('datetimeStart', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
           .get();
 
       Map<String, dynamic> data = {};
@@ -104,7 +104,7 @@ class _ReportsPageState extends State<ReportsPage> {
 
       for (var doc in snapshot.docs) {
         final docData = doc.data() as Map<String, dynamic>;
-        final date = (docData['date'] as Timestamp).toDate();
+        final date = (docData['datetimeStart'] as Timestamp).toDate();
         final dateKey = DateFormat('yyyy-MM-dd').format(date);
 
         if (date.weekday == DateTime.sunday) {
