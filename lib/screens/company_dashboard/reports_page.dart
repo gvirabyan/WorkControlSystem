@@ -76,18 +76,18 @@ class _ReportsPageState extends State<ReportsPage> {
         case ReportType.monthly:
           if (selectedMonth == null) return;
           startDate = DateTime(selectedMonth!.year, selectedMonth!.month, 1);
-          endDate = DateTime(selectedMonth!.year, selectedMonth!.month + 1, 0);
+          endDate = DateTime(selectedMonth!.year, selectedMonth!.month + 1, 0, 23, 59, 59);
           break;
         case ReportType.quarterly:
           if (selectedQuarterEnd == null) return;
           // quarter considered as 3 months ending at selectedQuarterEnd
           startDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month - 2, 1);
-          endDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month + 1, 0);
+          endDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month + 1, 0, 23, 59, 59);
           break;
         case ReportType.yearly:
           if (selectedYear == null) return;
           startDate = DateTime(selectedYear!.year, 1, 1);
-          endDate = DateTime(selectedYear!.year, 12, 31);
+          endDate = DateTime(selectedYear!.year, 12, 31, 23, 59, 59);
           break;
       }
 
