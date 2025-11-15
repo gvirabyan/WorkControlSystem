@@ -76,35 +76,39 @@ class _ReportsPageState extends State<ReportsPage> {
         case ReportType.monthly:
           if (selectedMonth == null) return;
           startDate = DateTime(selectedMonth!.year, selectedMonth!.month, 1);
-          endDate = DateTime(selectedMonth!.year, selectedMonth!.month + 1, 0);
+          endDate = DateTime(selectedMonth!.year, selectedMonth!.month + 1, 0, 23, 59, 59);
           break;
         case ReportType.quarterly:
           if (selectedQuarterEnd == null) return;
           // quarter considered as 3 months ending at selectedQuarterEnd
           startDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month - 2, 1);
-          endDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month + 1, 0);
+          endDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month + 1, 0, 23, 59, 59);
           break;
         case ReportType.yearly:
           if (selectedYear == null) return;
           startDate = DateTime(selectedYear!.year, 1, 1);
-          endDate = DateTime(selectedYear!.year, 12, 31);
+          endDate = DateTime(selectedYear!.year, 12, 31, 23, 59, 59);
           break;
       }
 
       final snapshot = await FirebaseFirestore.instance
           .collection('employee_action_history')
           .where('userId', isEqualTo: selectedEmployeeId)
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
-          .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
           .get();
 
       Map<String, dynamic> data = {};
       int totalMinutes = 0;
       int sundaysWorked = 0;
 
-      for (var doc in snapshot.docs) {
+      final docs = snapshot.docs.where((doc) {
+        final timestamp = doc.data()['datetimeStart'] as Timestamp;
+        final docDate = timestamp.toDate();
+        return docDate.isAfter(startDate) && docDate.isBefore(endDate);
+      }).toList();
+
+      for (var doc in docs) {
         final docData = doc.data() as Map<String, dynamic>;
-        final date = (docData['date'] as Timestamp).toDate();
+        final date = (docData['datetimeStart'] as Timestamp).toDate();
         final dateKey = DateFormat('yyyy-MM-dd').format(date);
 
         if (date.weekday == DateTime.sunday) {
