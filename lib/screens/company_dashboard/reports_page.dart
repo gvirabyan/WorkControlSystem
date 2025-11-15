@@ -22,7 +22,7 @@ class _ReportsPageState extends State<ReportsPage> {
   ReportType? selectedReportType;
   DateTime? selectedMonth;
   DateTime? selectedYear;
-  DateTime? selectedQuarterStart;
+  DateTime? selectedQuarterEnd;
 
   List<Map<String, dynamic>> employees = [];
   bool isLoadingEmployees = true;
@@ -35,6 +35,7 @@ class _ReportsPageState extends State<ReportsPage> {
     _loadEmployees();
   }
 
+  /// Load employees from Firestore (users collection with type == 'employee')
   Future<void> _loadEmployees() async {
     setState(() => isLoadingEmployees = true);
 
@@ -49,17 +50,19 @@ class _ReportsPageState extends State<ReportsPage> {
         final data = doc.data();
         return {
           'id': doc.id,
-          'name': data['name'] ?? 'Без имени',
+          'name': data['name'] ?? 'No name',
           'surname': data['surname'] ?? '',
         };
       }).toList();
     } catch (e) {
+      // keep simple logging
       print('Error loading employees: $e');
     }
 
     setState(() => isLoadingEmployees = false);
   }
 
+  /// Load report data from Firestore based on selected report type and employee
   Future<void> _loadReportData() async {
     if (selectedEmployeeId == null || selectedReportType == null) return;
 
@@ -76,9 +79,10 @@ class _ReportsPageState extends State<ReportsPage> {
           endDate = DateTime(selectedMonth!.year, selectedMonth!.month + 1, 0);
           break;
         case ReportType.quarterly:
-          if (selectedQuarterStart == null) return;
-          startDate = DateTime(selectedQuarterStart!.year, selectedQuarterStart!.month - 2, 1);
-          endDate = DateTime(selectedQuarterStart!.year, selectedQuarterStart!.month + 1, 0);
+          if (selectedQuarterEnd == null) return;
+          // quarter considered as 3 months ending at selectedQuarterEnd
+          startDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month - 2, 1);
+          endDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month + 1, 0);
           break;
         case ReportType.yearly:
           if (selectedYear == null) return;
@@ -88,7 +92,7 @@ class _ReportsPageState extends State<ReportsPage> {
       }
 
       final snapshot = await FirebaseFirestore.instance
-          .collection('workLogs')
+          .collection('employee_action_history')
           .where('userId', isEqualTo: selectedEmployeeId)
           .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(startDate))
           .where('date', isLessThanOrEqualTo: Timestamp.fromDate(endDate))
@@ -141,6 +145,7 @@ class _ReportsPageState extends State<ReportsPage> {
     setState(() => isLoadingReport = false);
   }
 
+  /// Calculate net worked minutes (end - start - break)
   int _calculateWorkedMinutes(String start, String end, String? breakStart, String? breakEnd) {
     try {
       final startParts = start.split(':');
@@ -168,7 +173,7 @@ class _ReportsPageState extends State<ReportsPage> {
     if (selectedReportType == ReportType.monthly && selectedMonth != null) {
       return true;
     }
-    if (selectedReportType == ReportType.quarterly && selectedQuarterStart != null) {
+    if (selectedReportType == ReportType.quarterly && selectedQuarterEnd != null) {
       return true;
     }
     if (selectedReportType == ReportType.yearly && selectedYear != null) {
@@ -180,14 +185,16 @@ class _ReportsPageState extends State<ReportsPage> {
   String _formatMinutes(int minutes) {
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
-    return '${hours}h ${mins}m';
+    // format e.g. 7h 05m -> keep minutes padded
+    final minsStr = mins.toString().padLeft(2, '0');
+    return '${hours}h ${minsStr}m';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Отчеты'),
+        title: const Text('Reports'),
       ),
       body: isLoadingEmployees
           ? const Center(child: CircularProgressIndicator())
@@ -206,7 +213,7 @@ class _ReportsPageState extends State<ReportsPage> {
               ElevatedButton.icon(
                 onPressed: _loadReportData,
                 icon: const Icon(Icons.search),
-                label: const Text('Сформировать отчет'),
+                label: const Text('Generate report'),
               ),
             const SizedBox(height: 24),
             if (isLoadingReport)
@@ -224,7 +231,7 @@ class _ReportsPageState extends State<ReportsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Выберите сотрудника:',
+          'Select employee:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -234,7 +241,7 @@ class _ReportsPageState extends State<ReportsPage> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           value: selectedEmployeeId,
-          hint: const Text('Выберите сотрудника'),
+          hint: const Text('Select employee'),
           items: employees.map((emp) {
             return DropdownMenuItem<String>(
               value: emp['id'],
@@ -261,7 +268,7 @@ class _ReportsPageState extends State<ReportsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Тип отчета:',
+          'Report type:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -271,11 +278,11 @@ class _ReportsPageState extends State<ReportsPage> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           value: selectedReportType,
-          hint: const Text('Выберите тип отчета'),
+          hint: const Text('Select report type'),
           items: const [
-            DropdownMenuItem(value: ReportType.monthly, child: Text('Месячный отчет')),
-            DropdownMenuItem(value: ReportType.quarterly, child: Text('Отчет за 3 месяца')),
-            DropdownMenuItem(value: ReportType.yearly, child: Text('Годовой отчет')),
+            DropdownMenuItem(value: ReportType.monthly, child: Text('Monthly report')),
+            DropdownMenuItem(value: ReportType.quarterly, child: Text('Quarter (3 months)')),
+            DropdownMenuItem(value: ReportType.yearly, child: Text('Yearly report')),
           ],
           onChanged: isEnabled
               ? (value) {
@@ -283,7 +290,7 @@ class _ReportsPageState extends State<ReportsPage> {
               selectedReportType = value;
               selectedMonth = null;
               selectedYear = null;
-              selectedQuarterStart = null;
+              selectedQuarterEnd = null;
               reportData = {};
             });
           }
@@ -309,25 +316,25 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Widget _buildMonthPicker(bool isEnabled) {
     final months = [
-      {'value': 1, 'name': 'Январь'},
-      {'value': 2, 'name': 'Февраль'},
-      {'value': 3, 'name': 'Март'},
-      {'value': 4, 'name': 'Апрель'},
-      {'value': 5, 'name': 'Май'},
-      {'value': 6, 'name': 'Июнь'},
-      {'value': 7, 'name': 'Июль'},
-      {'value': 8, 'name': 'Август'},
-      {'value': 9, 'name': 'Сентябрь'},
-      {'value': 10, 'name': 'Октябрь'},
-      {'value': 11, 'name': 'Ноябрь'},
-      {'value': 12, 'name': 'Декабрь'},
+      {'value': 1, 'name': 'January'},
+      {'value': 2, 'name': 'February'},
+      {'value': 3, 'name': 'March'},
+      {'value': 4, 'name': 'April'},
+      {'value': 5, 'name': 'May'},
+      {'value': 6, 'name': 'June'},
+      {'value': 7, 'name': 'July'},
+      {'value': 8, 'name': 'August'},
+      {'value': 9, 'name': 'September'},
+      {'value': 10, 'name': 'October'},
+      {'value': 11, 'name': 'November'},
+      {'value': 12, 'name': 'December'},
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Выберите месяц:',
+          'Select month:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -337,7 +344,7 @@ class _ReportsPageState extends State<ReportsPage> {
             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           ),
           value: selectedMonth?.month,
-          hint: const Text('Выберите месяц'),
+          hint: const Text('Select month'),
           items: months.map((month) {
             return DropdownMenuItem<int>(
               value: month['value'] as int,
@@ -365,7 +372,7 @@ class _ReportsPageState extends State<ReportsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Выберите конечный месяц квартала:',
+          'Select quarter end month:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -374,14 +381,14 @@ class _ReportsPageState extends State<ReportsPage> {
               ? () async {
             final date = await showDatePicker(
               context: context,
-              initialDate: selectedQuarterStart ?? DateTime.now(),
+              initialDate: selectedQuarterEnd ?? DateTime.now(),
               firstDate: DateTime(2020),
               lastDate: DateTime.now(),
               initialDatePickerMode: DatePickerMode.year,
             );
             if (date != null) {
               setState(() {
-                selectedQuarterStart = date;
+                selectedQuarterEnd = date;
                 reportData = {};
               });
             }
@@ -393,9 +400,9 @@ class _ReportsPageState extends State<ReportsPage> {
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             child: Text(
-              selectedQuarterStart != null
-                  ? '${DateFormat('MMMM yyyy', 'ru').format(DateTime(selectedQuarterStart!.year, selectedQuarterStart!.month - 2, 1))} - ${DateFormat('MMMM yyyy', 'ru').format(selectedQuarterStart!)}'
-                  : 'Выберите месяц',
+              selectedQuarterEnd != null
+                  ? '${DateFormat('MMMM yyyy', 'en_US').format(DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month - 2, 1))} - ${DateFormat('MMMM yyyy', 'en_US').format(selectedQuarterEnd!)}'
+                  : 'Select month',
               style: TextStyle(
                 color: isEnabled ? Colors.black : Colors.grey,
               ),
@@ -411,7 +418,7 @@ class _ReportsPageState extends State<ReportsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Выберите год:',
+          'Select year:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
@@ -439,7 +446,7 @@ class _ReportsPageState extends State<ReportsPage> {
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             child: Text(
-              selectedYear != null ? '${selectedYear!.year}' : 'Выберите год',
+              selectedYear != null ? '${selectedYear!.year}' : 'Select year',
               style: TextStyle(
                 color: isEnabled ? Colors.black : Colors.grey,
               ),
@@ -451,7 +458,8 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   Widget _buildReportTable() {
-    final data = reportData.isNotEmpty ? reportData['data'] as Map<String, dynamic> : {};
+    final Map<String, dynamic> data =
+    reportData['data'] != null ? Map<String, dynamic>.from(reportData['data']) : {};
     final totalMinutes = reportData.isNotEmpty ? reportData['totalMinutes'] as int : 0;
     final sundaysWorked = reportData.isNotEmpty ? reportData['sundaysWorked'] as int : 0;
 
@@ -464,8 +472,8 @@ class _ReportsPageState extends State<ReportsPage> {
         endDate = DateTime(selectedMonth!.year, selectedMonth!.month + 1, 0);
         break;
       case ReportType.quarterly:
-        startDate = DateTime(selectedQuarterStart!.year, selectedQuarterStart!.month - 2, 1);
-        endDate = DateTime(selectedQuarterStart!.year, selectedQuarterStart!.month + 1, 0);
+        startDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month - 2, 1);
+        endDate = DateTime(selectedQuarterEnd!.year, selectedQuarterEnd!.month + 1, 0);
         break;
       case ReportType.yearly:
         startDate = DateTime(selectedYear!.year, 1, 1);
@@ -480,7 +488,7 @@ class _ReportsPageState extends State<ReportsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Отчет: $selectedEmployeeName',
+              'Report: $selectedEmployeeName',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
@@ -513,15 +521,17 @@ class _ReportsPageState extends State<ReportsPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          DateFormat('MMMM yyyy', 'ru').format(month),
+          DateFormat('MMMM yyyy', 'en_US').format(month),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 8),
         Table(
           border: TableBorder.all(color: Colors.grey.shade300),
           columnWidths: const {
-            0: FlexColumnWidth(1),
-            1: FlexColumnWidth(2),
+            0: FlexColumnWidth(1), // Date
+            1: FlexColumnWidth(2), // Working Time
+            2: FlexColumnWidth(2), // Break Time
+            3: FlexColumnWidth(1.2), // Net Time
           },
           children: [
             TableRow(
@@ -529,11 +539,19 @@ class _ReportsPageState extends State<ReportsPage> {
               children: const [
                 Padding(
                   padding: EdgeInsets.all(8),
-                  child: Text('Дата', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Date', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 Padding(
                   padding: EdgeInsets.all(8),
-                  child: Text('Рабочее время', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text('Working Time', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Text('Break Time', style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Text('Net Time', style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -543,6 +561,16 @@ class _ReportsPageState extends State<ReportsPage> {
               final dateKey = DateFormat('yyyy-MM-dd').format(date);
               final dayData = data[dateKey];
 
+              final workingText = (dayData != null && dayData['startTime'] != null && dayData['endTime'] != null)
+                  ? '${dayData['startTime']} - ${dayData['endTime']}'
+                  : '';
+
+              final breakText = (dayData != null && dayData['breakStart'] != null && dayData['breakEnd'] != null)
+                  ? '${dayData['breakStart']} - ${dayData['breakEnd']}'
+                  : '';
+
+              final netText = (dayData != null) ? _formatMinutes(dayData['workedMinutes'] ?? 0) : '';
+
               return TableRow(
                 children: [
                   Padding(
@@ -551,13 +579,15 @@ class _ReportsPageState extends State<ReportsPage> {
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8),
-                    child: dayData != null
-                        ? Text(
-                      '${dayData['startTime']} - ${dayData['endTime']} | '
-                          '${dayData['breakStart'] ?? ''} - ${dayData['breakEnd'] ?? ''} | '
-                          'Отработано: ${_formatMinutes(dayData['workedMinutes'])}',
-                    )
-                        : const Text(''),
+                    child: Text(workingText),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(breakText),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Text(netText),
                   ),
                 ],
               );
@@ -579,12 +609,12 @@ class _ReportsPageState extends State<ReportsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Итого отработано: ${_formatMinutes(totalMinutes)}',
+            'Total worked: ${_formatMinutes(totalMinutes)}',
             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
           Text(
-            'Работа в воскресенье: $sundaysWorked раз',
+            'Sundays worked: $sundaysWorked times',
             style: const TextStyle(fontSize: 16),
           ),
         ],
