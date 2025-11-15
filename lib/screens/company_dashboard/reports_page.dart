@@ -120,10 +120,10 @@ class _ReportsPageState extends State<ReportsPage> {
         final breakStart = docData['breakStart'] as String?;
         final breakEnd = docData['breakEnd'] as String?;
 
-        int workedMinutes = 0;
+        Map<String, int> timeData = {};
         if (startTime != null && endTime != null) {
-          workedMinutes = _calculateWorkedMinutes(startTime, endTime, breakStart, breakEnd);
-          totalMinutes += workedMinutes;
+          timeData = _calculateWorkedMinutes(startTime, endTime, breakStart, breakEnd);
+          totalMinutes += timeData['workedMinutes'] ?? 0;
         }
 
         data[dateKey] = <String, dynamic>{
@@ -131,7 +131,9 @@ class _ReportsPageState extends State<ReportsPage> {
           'endTime': endTime,
           'breakStart': breakStart,
           'breakEnd': breakEnd,
-          'workedMinutes': workedMinutes,
+          'workedMinutes': timeData['workedMinutes'] ?? 0,
+          'grossMinutes': timeData['grossMinutes'] ?? 0,
+          'breakMinutes': timeData['breakMinutes'] ?? 0,
         };
       }
 
@@ -150,26 +152,37 @@ class _ReportsPageState extends State<ReportsPage> {
   }
 
   /// Calculate net worked minutes (end - start - break)
-  int _calculateWorkedMinutes(String start, String end, String? breakStart, String? breakEnd) {
+  Map<String, int> _calculateWorkedMinutes(String start, String end, String? breakStart, String? breakEnd) {
     try {
       final startParts = start.split(':');
       final endParts = end.split(':');
       final startMinutes = int.parse(startParts[0]) * 60 + int.parse(startParts[1]);
       final endMinutes = int.parse(endParts[0]) * 60 + int.parse(endParts[1]);
 
-      int totalMinutes = endMinutes - startMinutes;
+      int grossMinutes = endMinutes - startMinutes;
+      int breakMinutes = 0;
 
       if (breakStart != null && breakEnd != null) {
         final breakStartParts = breakStart.split(':');
         final breakEndParts = breakEnd.split(':');
         final breakStartMinutes = int.parse(breakStartParts[0]) * 60 + int.parse(breakStartParts[1]);
         final breakEndMinutes = int.parse(breakEndParts[0]) * 60 + int.parse(breakEndParts[1]);
-        totalMinutes -= (breakEndMinutes - breakStartMinutes);
+        breakMinutes = breakEndMinutes - breakStartMinutes;
       }
 
-      return totalMinutes > 0 ? totalMinutes : 0;
+      final workedMinutes = grossMinutes - breakMinutes;
+
+      return {
+        'grossMinutes': grossMinutes > 0 ? grossMinutes : 0,
+        'breakMinutes': breakMinutes > 0 ? breakMinutes : 0,
+        'workedMinutes': workedMinutes > 0 ? workedMinutes : 0,
+      };
     } catch (e) {
-      return 0;
+      return {
+        'grossMinutes': 0,
+        'breakMinutes': 0,
+        'workedMinutes': 0,
+      };
     }
   }
 
@@ -565,12 +578,12 @@ class _ReportsPageState extends State<ReportsPage> {
               final dateKey = DateFormat('yyyy-MM-dd').format(date);
               final dayData = data[dateKey];
 
-              final workingText = (dayData != null && dayData['startTime'] != null && dayData['endTime'] != null)
-                  ? '${dayData['startTime']} - ${dayData['endTime']}'
+              final workingText = (dayData != null)
+                  ? _formatMinutes(dayData['grossMinutes'] ?? 0)
                   : '';
 
-              final breakText = (dayData != null && dayData['breakStart'] != null && dayData['breakEnd'] != null)
-                  ? '${dayData['breakStart']} - ${dayData['breakEnd']}'
+              final breakText = (dayData != null)
+                  ? _formatMinutes(dayData['breakMinutes'] ?? 0)
                   : '';
 
               final netText = (dayData != null) ? _formatMinutes(dayData['workedMinutes'] ?? 0) : '';
